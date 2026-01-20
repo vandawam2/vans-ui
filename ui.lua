@@ -1,8 +1,8 @@
 --[[ 
-    SIMPLE UI LIBRARY (FINAL + MINIMIZE SYSTEM)
+    SIMPLE UI LIBRARY (FINAL ULTIMATE)
     1. Auto-Deletes Old instances
     2. Dark Golden Theme (No Borders)
-    3. Minimize & Close System added
+    3. Safe Close System (Center & Confirm)
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -71,24 +71,24 @@ local Library = {}
 
 function Library:CreateWindow(Config)
     local Title = Config.Title or "Golden Luxury Hub"
-    local LogoText = Config.Logo or "G" -- Huruf untuk tombol minimizer
+    local LogoText = Config.Logo or "G"
     
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "GoldLib_" .. math.random(1,1000)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = GetSafeGui()
 
-    -- [A] MINIMIZER FRAME (Kotak Kecil saat di-minimize)
+    -- [A] MINIMIZER FRAME (Kotak Kecil)
     local MiniFrame = Instance.new("TextButton")
     MiniFrame.Name = "MiniFrame"
     MiniFrame.Size = UDim2.new(0, 50, 0, 50)
-    MiniFrame.Position = UDim2.new(0.1, 0, 0.1, 0) -- Posisi awal
-    MiniFrame.BackgroundColor3 = Color3.fromRGB(180, 130, 20) -- Emas Mewah
+    MiniFrame.Position = UDim2.new(0.1, 0, 0.1, 0)
+    MiniFrame.BackgroundColor3 = Color3.fromRGB(180, 130, 20)
     MiniFrame.Text = LogoText
     MiniFrame.TextColor3 = Color3.fromRGB(40, 25, 10)
     MiniFrame.Font = Enum.Font.GothamBold
     MiniFrame.TextSize = 24
-    MiniFrame.Visible = false -- Sembunyi di awal
+    MiniFrame.Visible = false
     MiniFrame.BorderSizePixel = 0
     MiniFrame.Parent = ScreenGui
     
@@ -96,13 +96,12 @@ function Library:CreateWindow(Config)
     MiniCorner.CornerRadius = UDim.new(0, 12)
     MiniCorner.Parent = MiniFrame
     
-    -- Efek Stroke Emas Terang di Minimizer
     local MiniStroke = Instance.new("UIStroke")
     MiniStroke.Color = Color3.fromRGB(255, 230, 150)
     MiniStroke.Thickness = 2
     MiniStroke.Parent = MiniFrame
 
-    MakeDraggable(MiniFrame, MiniFrame) -- Bisa digeser
+    MakeDraggable(MiniFrame, MiniFrame)
 
     -- [B] MAIN FRAME
     local MainFrame = Instance.new("Frame")
@@ -122,11 +121,10 @@ function Library:CreateWindow(Config)
     Corner.CornerRadius = UDim.new(0, 8)
     Corner.Parent = MainFrame
     
-    -- LOGIC MINIMIZE / RESTORE
+    -- LOGIC RESTORE
     MiniFrame.MouseButton1Click:Connect(function()
         MainFrame.Visible = true
         MiniFrame.Visible = false
-        -- Efek pop-up
         MainFrame.Size = UDim2.new(0, 0, 0, 0)
         TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 450, 0, 300)}):Play()
     end)
@@ -134,7 +132,7 @@ function Library:CreateWindow(Config)
     -- [C] TOPBAR
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, 40)
-    Topbar.BackgroundColor3 = Color3.fromRGB(50, 35, 10) -- Sangat Gelap
+    Topbar.BackgroundColor3 = Color3.fromRGB(50, 35, 10)
     Topbar.BorderSizePixel = 0
     Topbar.Parent = MainFrame
     
@@ -150,7 +148,7 @@ function Library:CreateWindow(Config)
     HideBar.Parent = Topbar
 
     local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -100, 1, 0) -- Dikurangi size-nya biar ga nabrak tombol
+    TitleLabel.Size = UDim2.new(1, -100, 1, 0)
     TitleLabel.Position = UDim2.new(0, 15, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = Title
@@ -162,7 +160,86 @@ function Library:CreateWindow(Config)
     
     MakeDraggable(Topbar, MainFrame)
 
-    -- [D] CONTROL BUTTONS (Minimize & Close)
+    -- [D] CONFIRMATION POPUP (Overlay)
+    local ConfirmCanvas = Instance.new("Frame")
+    ConfirmCanvas.Name = "ConfirmOverlay"
+    ConfirmCanvas.Size = UDim2.new(1, 0, 1, 0)
+    ConfirmCanvas.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    ConfirmCanvas.BackgroundTransparency = 0.4
+    ConfirmCanvas.ZIndex = 20 -- Paling atas
+    ConfirmCanvas.Visible = false
+    ConfirmCanvas.Parent = MainFrame
+    
+    local ConfirmCanvasCorner = Instance.new("UICorner")
+    ConfirmCanvasCorner.CornerRadius = UDim.new(0, 8)
+    ConfirmCanvasCorner.Parent = ConfirmCanvas
+
+    local ConfirmBox = Instance.new("Frame")
+    ConfirmBox.Size = UDim2.new(0, 220, 0, 110)
+    ConfirmBox.Position = UDim2.new(0.5, -110, 0.5, -55)
+    ConfirmBox.BackgroundColor3 = Color3.fromRGB(45, 30, 10) -- Dark Theme
+    ConfirmBox.ZIndex = 21
+    ConfirmBox.Parent = ConfirmCanvas
+
+    local ConfirmStroke = Instance.new("UIStroke")
+    ConfirmStroke.Color = Color3.fromRGB(255, 215, 0)
+    ConfirmStroke.Thickness = 2
+    ConfirmStroke.Parent = ConfirmBox
+
+    local ConfirmCorner = Instance.new("UICorner")
+    ConfirmCorner.CornerRadius = UDim.new(0, 8)
+    ConfirmCorner.Parent = ConfirmBox
+
+    local ConfirmText = Instance.new("TextLabel")
+    ConfirmText.Size = UDim2.new(1, 0, 0, 40)
+    ConfirmText.BackgroundTransparency = 1
+    ConfirmText.Text = "Exit Hub?"
+    ConfirmText.TextColor3 = Color3.fromRGB(255, 230, 150)
+    ConfirmText.Font = Enum.Font.GothamBold
+    ConfirmText.TextSize = 18
+    ConfirmText.ZIndex = 22
+    ConfirmText.Parent = ConfirmBox
+
+    -- YES Button
+    local YesBtn = Instance.new("TextButton")
+    YesBtn.Size = UDim2.new(0, 80, 0, 30)
+    YesBtn.Position = UDim2.new(0, 20, 0, 60)
+    YesBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah
+    YesBtn.Text = "Yes"
+    YesBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    YesBtn.Font = Enum.Font.GothamBold
+    YesBtn.TextSize = 14
+    YesBtn.ZIndex = 22
+    YesBtn.Parent = ConfirmBox
+    local YesCorner = Instance.new("UICorner")
+    YesCorner.CornerRadius = UDim.new(0, 6)
+    YesCorner.Parent = YesBtn
+    
+    YesBtn.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy()
+    end)
+
+    -- NO Button
+    local NoBtn = Instance.new("TextButton")
+    NoBtn.Size = UDim2.new(0, 80, 0, 30)
+    NoBtn.Position = UDim2.new(1, -100, 0, 60)
+    NoBtn.BackgroundColor3 = Color3.fromRGB(70, 70, 70) -- Abu
+    NoBtn.Text = "No"
+    NoBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    NoBtn.Font = Enum.Font.GothamBold
+    NoBtn.TextSize = 14
+    NoBtn.ZIndex = 22
+    NoBtn.Parent = ConfirmBox
+    local NoCorner = Instance.new("UICorner")
+    NoCorner.CornerRadius = UDim.new(0, 6)
+    NoCorner.Parent = NoBtn
+
+    NoBtn.MouseButton1Click:Connect(function()
+        ConfirmCanvas.Visible = false
+    end)
+
+
+    -- [E] CONTROL BUTTONS (Topbar)
     local ButtonContainer = Instance.new("Frame")
     ButtonContainer.Size = UDim2.new(0, 80, 1, 0)
     ButtonContainer.Position = UDim2.new(1, -85, 0, 0)
@@ -193,8 +270,15 @@ function Library:CreateWindow(Config)
     CloseCorner.CornerRadius = UDim.new(0, 6)
     CloseCorner.Parent = CloseBtn
 
+    -- LOGIC CLOSE (Center & Confirm)
     CloseBtn.MouseButton1Click:Connect(function()
-        ScreenGui:Destroy() -- Hancurkan UI
+        -- Pindahkan UI ke tengah layar dengan smooth
+        TweenService:Create(MainFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {
+            Position = UDim2.new(0.5, -225, 0.5, -150)
+        }):Play()
+        
+        -- Munculkan konfirmasi
+        ConfirmCanvas.Visible = true
     end)
 
     -- 2. Minimize Button (-)
@@ -214,14 +298,13 @@ function Library:CreateWindow(Config)
     MinCorner.Parent = MinBtn
 
     MinBtn.MouseButton1Click:Connect(function()
-        -- Animasi Minimize
         TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 0, 0, 0)}):Play()
         task.wait(0.3)
         MainFrame.Visible = false
-        MiniFrame.Visible = true -- Munculkan kotak kecil
+        MiniFrame.Visible = true
     end)
 
-    -- [E] TABS & PAGES
+    -- [F] TABS & PAGES
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(0, 130, 1, -40)
     TabContainer.Position = UDim2.new(0, 0, 0, 40)
