@@ -1,8 +1,8 @@
 --[[ 
-    SIMPLE UI LIBRARY (FINAL REVISION)
-    1. Auto-Deletes Old instances (Anti-Stack)
-    2. Buttons are now VERY DARK (Coffee/Dark Choco)
-    3. Absolutely NO Borders on Buttons
+    SIMPLE UI LIBRARY (FINAL + MINIMIZE SYSTEM)
+    1. Auto-Deletes Old instances
+    2. Dark Golden Theme (No Borders)
+    3. Minimize & Close System added
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -20,7 +20,7 @@ local function GetSafeGui()
     return result
 end
 
--- [🔥 PENTING] HAPUS GUI LAMA OTOMATIS BIAR GAK NUMPUK
+-- HAPUS GUI LAMA OTOMATIS
 for _, v in pairs(GetSafeGui():GetChildren()) do
     if v.Name:sub(1, 8) == "GoldLib_" then
         v:Destroy()
@@ -71,13 +71,40 @@ local Library = {}
 
 function Library:CreateWindow(Config)
     local Title = Config.Title or "Golden Luxury Hub"
+    local LogoText = Config.Logo or "G" -- Huruf untuk tombol minimizer
     
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "GoldLib_" .. math.random(1,1000)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = GetSafeGui()
 
-    -- [1] Main Frame (Background Emas Mewah)
+    -- [A] MINIMIZER FRAME (Kotak Kecil saat di-minimize)
+    local MiniFrame = Instance.new("TextButton")
+    MiniFrame.Name = "MiniFrame"
+    MiniFrame.Size = UDim2.new(0, 50, 0, 50)
+    MiniFrame.Position = UDim2.new(0.1, 0, 0.1, 0) -- Posisi awal
+    MiniFrame.BackgroundColor3 = Color3.fromRGB(180, 130, 20) -- Emas Mewah
+    MiniFrame.Text = LogoText
+    MiniFrame.TextColor3 = Color3.fromRGB(40, 25, 10)
+    MiniFrame.Font = Enum.Font.GothamBold
+    MiniFrame.TextSize = 24
+    MiniFrame.Visible = false -- Sembunyi di awal
+    MiniFrame.BorderSizePixel = 0
+    MiniFrame.Parent = ScreenGui
+    
+    local MiniCorner = Instance.new("UICorner")
+    MiniCorner.CornerRadius = UDim.new(0, 12)
+    MiniCorner.Parent = MiniFrame
+    
+    -- Efek Stroke Emas Terang di Minimizer
+    local MiniStroke = Instance.new("UIStroke")
+    MiniStroke.Color = Color3.fromRGB(255, 230, 150)
+    MiniStroke.Thickness = 2
+    MiniStroke.Parent = MiniFrame
+
+    MakeDraggable(MiniFrame, MiniFrame) -- Bisa digeser
+
+    -- [B] MAIN FRAME
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 450, 0, 300)
@@ -86,7 +113,6 @@ function Library:CreateWindow(Config)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
 
-    -- Border hanya di Frame Utama (Opsional, hapus jika mau polos total)
     local MainStroke = Instance.new("UIStroke")
     MainStroke.Color = Color3.fromRGB(255, 215, 0)
     MainStroke.Thickness = 2
@@ -96,7 +122,16 @@ function Library:CreateWindow(Config)
     Corner.CornerRadius = UDim.new(0, 8)
     Corner.Parent = MainFrame
     
-    -- [2] Topbar
+    -- LOGIC MINIMIZE / RESTORE
+    MiniFrame.MouseButton1Click:Connect(function()
+        MainFrame.Visible = true
+        MiniFrame.Visible = false
+        -- Efek pop-up
+        MainFrame.Size = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 450, 0, 300)}):Play()
+    end)
+
+    -- [C] TOPBAR
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, 40)
     Topbar.BackgroundColor3 = Color3.fromRGB(50, 35, 10) -- Sangat Gelap
@@ -115,7 +150,7 @@ function Library:CreateWindow(Config)
     HideBar.Parent = Topbar
 
     local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+    TitleLabel.Size = UDim2.new(1, -100, 1, 0) -- Dikurangi size-nya biar ga nabrak tombol
     TitleLabel.Position = UDim2.new(0, 15, 0, 0)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = Title
@@ -127,11 +162,70 @@ function Library:CreateWindow(Config)
     
     MakeDraggable(Topbar, MainFrame)
 
-    -- [3] Tab Container
+    -- [D] CONTROL BUTTONS (Minimize & Close)
+    local ButtonContainer = Instance.new("Frame")
+    ButtonContainer.Size = UDim2.new(0, 80, 1, 0)
+    ButtonContainer.Position = UDim2.new(1, -85, 0, 0)
+    ButtonContainer.BackgroundTransparency = 1
+    ButtonContainer.Parent = Topbar
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.FillDirection = Enum.FillDirection.Horizontal
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Padding = UDim.new(0, 5)
+    Layout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    Layout.VerticalAlignment = Enum.VerticalAlignment.Center
+    Layout.Parent = ButtonContainer
+
+    -- 1. Close Button (X)
+    local CloseBtn = Instance.new("TextButton")
+    CloseBtn.Name = "Close"
+    CloseBtn.Size = UDim2.new(0, 30, 0, 30)
+    CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) -- Merah Gelap
+    CloseBtn.Text = "X"
+    CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    CloseBtn.Font = Enum.Font.GothamBold
+    CloseBtn.TextSize = 14
+    CloseBtn.LayoutOrder = 2
+    CloseBtn.Parent = ButtonContainer
+    
+    local CloseCorner = Instance.new("UICorner")
+    CloseCorner.CornerRadius = UDim.new(0, 6)
+    CloseCorner.Parent = CloseBtn
+
+    CloseBtn.MouseButton1Click:Connect(function()
+        ScreenGui:Destroy() -- Hancurkan UI
+    end)
+
+    -- 2. Minimize Button (-)
+    local MinBtn = Instance.new("TextButton")
+    MinBtn.Name = "Minimize"
+    MinBtn.Size = UDim2.new(0, 30, 0, 30)
+    MinBtn.BackgroundColor3 = Color3.fromRGB(180, 130, 20) -- Emas
+    MinBtn.Text = "-"
+    MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MinBtn.Font = Enum.Font.GothamBold
+    MinBtn.TextSize = 18
+    MinBtn.LayoutOrder = 1
+    MinBtn.Parent = ButtonContainer
+
+    local MinCorner = Instance.new("UICorner")
+    MinCorner.CornerRadius = UDim.new(0, 6)
+    MinCorner.Parent = MinBtn
+
+    MinBtn.MouseButton1Click:Connect(function()
+        -- Animasi Minimize
+        TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 0, 0, 0)}):Play()
+        task.wait(0.3)
+        MainFrame.Visible = false
+        MiniFrame.Visible = true -- Munculkan kotak kecil
+    end)
+
+    -- [E] TABS & PAGES
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(0, 130, 1, -40)
     TabContainer.Position = UDim2.new(0, 0, 0, 40)
-    TabContainer.BackgroundColor3 = Color3.fromRGB(40, 25, 5) -- Hampir Hitam
+    TabContainer.BackgroundColor3 = Color3.fromRGB(40, 25, 5) 
     TabContainer.BorderSizePixel = 0
     TabContainer.Parent = MainFrame
     
@@ -149,7 +243,6 @@ function Library:CreateWindow(Config)
     TabPadding.PaddingLeft = UDim.new(0, 10)
     TabPadding.Parent = TabContainer
 
-    -- Page Container
     local PageContainer = Instance.new("Frame")
     PageContainer.Size = UDim2.new(1, -145, 1, -55)
     PageContainer.Position = UDim2.new(0, 135, 0, 45)
@@ -162,7 +255,6 @@ function Library:CreateWindow(Config)
     function WindowFunctions:Tab(Name)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -15, 0, 32)
-        -- Tab Non-Aktif: Gelap Pudar
         TabBtn.BackgroundColor3 = Color3.fromRGB(60, 45, 15)
         TabBtn.BackgroundTransparency = 0.5
         TabBtn.Text = Name
@@ -226,24 +318,20 @@ function Library:CreateWindow(Config)
 
         local TabFunctions = {}
 
-        -- [ELEMENT: BUTTON - WARNA SAMA DENGAN TOGGLE (SANGAT GELAP)]
+        -- BUTTON (DARK)
         function TabFunctions:Button(Text, Callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 38)
-            -- Warna Cokelat Sangat Gelap (Hampir Hitam)
             Btn.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             Btn.Text = Text
             Btn.TextColor3 = Color3.fromRGB(255, 230, 150)
             Btn.Font = Enum.Font.GothamBold
             Btn.TextSize = 14
-            Btn.BorderSizePixel = 0 -- Pastikan border 0
+            Btn.BorderSizePixel = 0 
             Btn.Parent = Page
-            
             local BtnCorner = Instance.new("UICorner")
             BtnCorner.CornerRadius = UDim.new(0, 6)
             BtnCorner.Parent = Btn
-            
-            -- HAPUS UIStroke TOTAL
             
             Btn.MouseButton1Click:Connect(function()
                 TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(65, 50, 30)}):Play()
@@ -253,22 +341,18 @@ function Library:CreateWindow(Config)
             end)
         end
 
-        -- [ELEMENT: TOGGLE]
+        -- TOGGLE (DARK)
         function TabFunctions:Toggle(Text, Default, Callback)
             local Enabled = Default or false
-            
             local ToggleFrame = Instance.new("TextButton")
             ToggleFrame.Size = UDim2.new(1, 0, 0, 38)
-            -- Warna Cokelat Sangat Gelap (SAMA PERSIS DENGAN BUTTON)
             ToggleFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             ToggleFrame.Text = ""
             ToggleFrame.BorderSizePixel = 0
             ToggleFrame.Parent = Page
-            
             local ToggleCorner = Instance.new("UICorner")
             ToggleCorner.CornerRadius = UDim.new(0, 6)
             ToggleCorner.Parent = ToggleFrame
-            
             local Label = Instance.new("TextLabel")
             Label.Size = UDim2.new(1, -50, 1, 0)
             Label.Position = UDim2.new(0, 10, 0, 0)
@@ -279,23 +363,18 @@ function Library:CreateWindow(Config)
             Label.TextSize = 14
             Label.TextXAlignment = Enum.TextXAlignment.Left
             Label.Parent = ToggleFrame
-            
             local StatusBox = Instance.new("Frame")
             StatusBox.Size = UDim2.new(0, 24, 0, 24)
             StatusBox.Position = UDim2.new(1, -34, 0.5, -12)
-            -- Warna Status: Kuning Terang (On) atau Gelap (Off)
             StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5)
             StatusBox.Parent = ToggleFrame
-            
             local StatusCorner = Instance.new("UICorner")
             StatusCorner.CornerRadius = UDim.new(0, 4)
             StatusCorner.Parent = StatusBox
-            
             local StatusStroke = Instance.new("UIStroke")
             StatusStroke.Color = Color3.fromRGB(255, 230, 150)
             StatusStroke.Thickness = 1
             StatusStroke.Parent = StatusBox
-            
             ToggleFrame.MouseButton1Click:Connect(function()
                 Enabled = not Enabled
                 local GoalColor = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5)
@@ -304,44 +383,36 @@ function Library:CreateWindow(Config)
             end)
         end
         
-        -- [ELEMENT: LABEL - DARK TEXT]
+        -- LABEL
         function TabFunctions:Label(Text)
             local Lab = Instance.new("TextLabel")
             Lab.Size = UDim2.new(1, 0, 0, 30)
             Lab.BackgroundTransparency = 1
             Lab.Text = Text
-            -- Warna Teks Gelap (Kopi/Cokelat) Kontras dengan background Emas
             Lab.TextColor3 = Color3.fromRGB(40, 25, 10) 
             Lab.Font = Enum.Font.GothamBold
             Lab.TextSize = 15
             Lab.Parent = Page
         end
 
-        -- [ELEMENT: DROPDOWN]
+        -- DROPDOWN (DARK)
         function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
             local DropdownExpanded = false
             local Selected = Multi and (Default or {}) or (Default or nil)
-            
             local DropFrame = Instance.new("Frame")
             DropFrame.Size = UDim2.new(1, 0, 0, 40)
-            -- Warna Cokelat Sangat Gelap (SAMA PERSIS DENGAN BUTTON)
             DropFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             DropFrame.ClipsDescendants = true
             DropFrame.BorderSizePixel = 0
             DropFrame.Parent = Page
-            
             local DropCorner = Instance.new("UICorner")
             DropCorner.CornerRadius = UDim.new(0, 6)
             DropCorner.Parent = DropFrame
-            
-            -- HAPUS UIStroke TOTAL
-            
             local HeaderBtn = Instance.new("TextButton")
             HeaderBtn.Size = UDim2.new(1, 0, 0, 40)
             HeaderBtn.BackgroundTransparency = 1
             HeaderBtn.Text = ""
             HeaderBtn.Parent = DropFrame
-            
             local TitleLabel = Instance.new("TextLabel")
             TitleLabel.Size = UDim2.new(1, -40, 1, 0)
             TitleLabel.Position = UDim2.new(0, 10, 0, 0)
@@ -352,7 +423,6 @@ function Library:CreateWindow(Config)
             TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
             TitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
             TitleLabel.Parent = HeaderBtn
-            
             local Arrow = Instance.new("TextLabel")
             Arrow.Size = UDim2.new(0, 30, 1, 0)
             Arrow.Position = UDim2.new(1, -30, 0, 0)
@@ -362,7 +432,6 @@ function Library:CreateWindow(Config)
             Arrow.Font = Enum.Font.GothamBold
             Arrow.TextSize = 14
             Arrow.Parent = HeaderBtn
-
             local ListContainer = Instance.new("ScrollingFrame")
             ListContainer.Size = UDim2.new(1, -10, 0, 150)
             ListContainer.Position = UDim2.new(0, 5, 0, 45)
@@ -372,15 +441,13 @@ function Library:CreateWindow(Config)
             ListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
             ListContainer.Visible = false
             ListContainer.Parent = DropFrame
-            
             local ListLayout = Instance.new("UIListLayout")
             ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
             ListLayout.Padding = UDim.new(0, 2)
             ListLayout.Parent = ListContainer
-
             local SearchBox = Instance.new("TextBox")
             SearchBox.Size = UDim2.new(1, 0, 0, 25)
-            SearchBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) -- Lebih gelap dari frame
+            SearchBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) 
             SearchBox.PlaceholderText = "Search..."
             SearchBox.Text = ""
             SearchBox.TextColor3 = Color3.fromRGB(255, 230, 150)
@@ -391,11 +458,9 @@ function Library:CreateWindow(Config)
             SearchBox.BorderSizePixel = 0
             SearchBox.Parent = DropFrame
             SearchBox.Position = UDim2.new(0, 5, 0, 45)
-            
             local SearchCorner = Instance.new("UICorner")
             SearchCorner.CornerRadius = UDim.new(0, 4)
             SearchCorner.Parent = SearchBox
-
             local function UpdateHeaderText()
                 if Multi then
                     local count = #Selected
@@ -406,7 +471,6 @@ function Library:CreateWindow(Config)
                     TitleLabel.Text = Text .. ": " .. (Selected and tostring(Selected) or "None")
                 end
             end
-
             local function RefreshList(filterText)
                 for _, v in pairs(ListContainer:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
@@ -418,7 +482,6 @@ function Library:CreateWindow(Config)
                     if filterText == "" or string.find(tostring(option):lower(), filterText:lower()) then
                         local ItemBtn = Instance.new("TextButton")
                         ItemBtn.Size = UDim2.new(1, 0, 0, 25)
-                        -- Item Default: Gelap sama seperti Frame
                         ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
                         ItemBtn.Text = tostring(option)
                         ItemBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
@@ -429,7 +492,6 @@ function Library:CreateWindow(Config)
                         local ItemCorner = Instance.new("UICorner")
                         ItemCorner.CornerRadius = UDim.new(0, 4)
                         ItemCorner.Parent = ItemBtn
-
                         if Multi then
                             if table.find(Selected, option) then
                                 ItemBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
@@ -441,7 +503,6 @@ function Library:CreateWindow(Config)
                                 ItemBtn.TextColor3 = Color3.fromRGB(40, 35, 20)
                             end
                         end
-
                         ItemBtn.MouseButton1Click:Connect(function()
                             if Multi then
                                 if table.find(Selected, option) then
@@ -491,9 +552,7 @@ function Library:CreateWindow(Config)
                 end
                 ListContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
             end
-
             SearchBox:GetPropertyChangedSignal("Text"):Connect(function() RefreshList(SearchBox.Text) end)
-
             HeaderBtn.MouseButton1Click:Connect(function()
                 DropdownExpanded = not DropdownExpanded
                 if DropdownExpanded then
@@ -509,14 +568,10 @@ function Library:CreateWindow(Config)
                     SearchBox.Visible = false
                 end
             end)
-            
             UpdateHeaderText()
         end
-        
         return TabFunctions
     end
-
     return WindowFunctions
 end
-
 return Library
