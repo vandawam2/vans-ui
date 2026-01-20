@@ -1,7 +1,7 @@
 --[[ 
-    SIMPLE UI LIBRARY
+    SIMPLE UI LIBRARY (FIXED)
     Lightweight, CoreGui Support, No Images.
-    Author: [Your Name]
+    Theme: Golden Luxury
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -12,7 +12,6 @@ local CoreGui = game:GetService("CoreGui")
 
 -- [1] UTILITIES & SAFE GUI
 local function GetSafeGui()
-    -- Mencoba mengambil container UI yang aman (CoreGui)
     local success, result = pcall(function()
         return (gethui and gethui()) or (game:GetService("CoreGui"))
     end)
@@ -61,101 +60,6 @@ end
 
 -- [2] LIBRARY MAIN
 local Library = {}
-
-function Library:CreateWindow(Config)
-    local Title = Config.Title or "Golden Luxury Hub"
-    
-    local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "GoldLib_" .. math.random(1,1000)
-    ScreenGui.ResetOnSpawn = false
-    ScreenGui.Parent = GetSafeGui()
-
-    -- [1] Main Frame (Solid Deep Gold)
-    local MainFrame = Instance.new("Frame")
-    MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 450, 0, 300)
-    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-    -- Warna Emas Kaya (Rich Gold) - Tidak terlalu kuning terang
-    MainFrame.BackgroundColor3 = Color3.fromRGB(180, 130, 20) 
-    MainFrame.BorderSizePixel = 0
-    MainFrame.Parent = ScreenGui
-
-    -- Memberikan Border Emas Terang agar terlihat seperti lempengan emas
-    local MainStroke = Instance.new("UIStroke")
-    MainStroke.Color = Color3.fromRGB(220, 180, 50) -- Emas lebih terang
-    MainStroke.Thickness = 2
-    MainStroke.Parent = MainFrame
-
-    -- Rounded Corner
-    local Corner = Instance.new("UICorner")
-    Corner.CornerRadius = UDim.new(0, 8) -- Sedikit lebih bulat untuk kesan premium
-    Corner.Parent = MainFrame
-    
-    -- [2] Topbar (Darker Bronze/Gold contrast)
-    local Topbar = Instance.new("Frame")
-    Topbar.Size = UDim2.new(1, 0, 0, 40) -- Sedikit lebih tinggi
-    -- Warna kontras gelap (Bronze tua) agar judul terbaca jelas
-    Topbar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
-    Topbar.BorderSizePixel = 0
-    Topbar.Parent = MainFrame
-    
-    local TopbarCorner = Instance.new("UICorner")
-    TopbarCorner.CornerRadius = UDim.new(0, 8)
-    TopbarCorner.Parent = Topbar
-    
-    local HideBar = Instance.new("Frame")
-    HideBar.Size = UDim2.new(1, 0, 0, 10)
-    HideBar.Position = UDim2.new(0, 0, 1, -10)
-    HideBar.BorderSizePixel = 0
-    Topbar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
-    HideBar.Parent = Topbar
-
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Size = UDim2.new(1, -20, 1, 0)
-    TitleLabel.Position = UDim2.new(0, 15, 0, 0)
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Text = Title
-    TitleLabel.Font = Enum.Font.GothamBold
-    -- Teks warna Emas Krim Terang
-    TitleLabel.TextColor3 = Color3.fromRGB(255, 245, 220) 
-    TitleLabel.TextSize = 18
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.Parent = Topbar
-    
-    MakeDraggable(Topbar, MainFrame)
-
-    -- [3] Tab Container (Dark Bronze Side)
-    local TabContainer = Instance.new("Frame")
-    TabContainer.Size = UDim2.new(0, 130, 1, -40)
-    TabContainer.Position = UDim2.new(0, 0, 0, 40)
-    -- Menyamakan dengan topbar
-    TabContainer.BackgroundColor3 = Color3.fromRGB(50, 35, 10) 
-    TabContainer.BorderSizePixel = 0
-    TabContainer.Parent = MainFrame
-    
-    local TabCorner = Instance.new("UICorner")
-    TabCorner.CornerRadius = UDim.new(0, 8)
-    TabCorner.Parent = TabContainer
-
-    local TabListLayout = Instance.new("UIListLayout")
-    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    TabListLayout.Padding = UDim.new(0, 8)
-    TabListLayout.Parent = TabContainer
-    
-    local TabPadding = Instance.new("UIPadding")
-    TabPadding.PaddingTop = UDim.new(0, 15)
-    TabPadding.PaddingLeft = UDim.new(0, 10)
-    TabPadding.Parent = TabContainer
-
-    -- Page Container
-    local PageContainer = Instance.new("Frame")
-    PageContainer.Size = UDim2.new(1, -145, 1, -55)
-    PageContainer.Position = UDim2.new(0, 135, 0, 45)
-    PageContainer.BackgroundTransparency = 1
-    PageContainer.Parent = MainFrame
-
-    local WindowFunctions = {}
-    local FirstTab = true
 
 function Library:CreateWindow(Config)
     local Title = Config.Title or "Golden Luxury Hub"
@@ -312,14 +216,12 @@ function Library:CreateWindow(Config)
 
         local TabFunctions = {}
 
-        -- [ELEMENT: BUTTON - Dark Gold Style]
+        -- [ELEMENT: BUTTON]
         function TabFunctions:Button(Text, Callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 38)
-            -- Background tombol jadi Emas Gelap
             Btn.BackgroundColor3 = Color3.fromRGB(80, 60, 30)
             Btn.Text = Text
-            -- Teks jadi Emas Terang agar kontras
             Btn.TextColor3 = Color3.fromRGB(255, 230, 150)
             Btn.Font = Enum.Font.GothamBold
             Btn.TextSize = 14
@@ -343,7 +245,7 @@ function Library:CreateWindow(Config)
             end)
         end
 
-        -- [ELEMENT: TOGGLE - Dark Gold Style]
+        -- [ELEMENT: TOGGLE]
         function TabFunctions:Toggle(Text, Default, Callback)
             local Enabled = Default or false
             
@@ -391,27 +293,25 @@ function Library:CreateWindow(Config)
             end)
         end
         
-        -- [ELEMENT: LABEL - Dark Style for Contrast]
+        -- [ELEMENT: LABEL]
         function TabFunctions:Label(Text)
             local Lab = Instance.new("TextLabel")
             Lab.Size = UDim2.new(1, 0, 0, 30)
             Lab.BackgroundTransparency = 1
             Lab.Text = Text
-            -- Teks jadi gelap agar kontras dengan background halaman yang terang
             Lab.TextColor3 = Color3.fromRGB(50, 40, 20) 
             Lab.Font = Enum.Font.GothamBold
             Lab.TextSize = 15
             Lab.Parent = Page
         end
 
-        -- [ELEMENT: DROPDOWN (UPDATED COLORS)]
+        -- [ELEMENT: DROPDOWN]
         function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
             local DropdownExpanded = false
             local Selected = Multi and (Default or {}) or (Default or nil)
             
             local DropFrame = Instance.new("Frame")
             DropFrame.Size = UDim2.new(1, 0, 0, 40)
-            -- Background Header jadi Emas Gelap
             DropFrame.BackgroundColor3 = Color3.fromRGB(80, 60, 30) 
             DropFrame.ClipsDescendants = true
             DropFrame.Parent = Page
@@ -420,7 +320,6 @@ function Library:CreateWindow(Config)
             DropCorner.CornerRadius = UDim.new(0, 6)
             DropCorner.Parent = DropFrame
             
-            -- Stroke untuk header dropdown
             local DropStroke = Instance.new("UIStroke")
             DropStroke.Color = Color3.fromRGB(255, 230, 150)
             DropStroke.Thickness = 1.5
@@ -437,7 +336,6 @@ function Library:CreateWindow(Config)
             TitleLabel.Size = UDim2.new(1, -40, 1, 0)
             TitleLabel.Position = UDim2.new(0, 10, 0, 0)
             TitleLabel.BackgroundTransparency = 1
-            -- Teks header jadi Emas Terang
             TitleLabel.TextColor3 = Color3.fromRGB(255, 230, 150) 
             TitleLabel.Font = Enum.Font.GothamSemibold
             TitleLabel.TextSize = 14
@@ -472,7 +370,6 @@ function Library:CreateWindow(Config)
 
             local SearchBox = Instance.new("TextBox")
             SearchBox.Size = UDim2.new(1, 0, 0, 25)
-            -- FIX: Background SearchBox jadi Cokelat Emas Gelap (bukan abu-abu)
             SearchBox.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
             SearchBox.PlaceholderText = "Search..."
             SearchBox.Text = ""
@@ -510,7 +407,6 @@ function Library:CreateWindow(Config)
                     if filterText == "" or string.find(tostring(option):lower(), filterText:lower()) then
                         local ItemBtn = Instance.new("TextButton")
                         ItemBtn.Size = UDim2.new(1, 0, 0, 25)
-                        -- Item list non-aktif: Cokelat Emas Gelap
                         ItemBtn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
                         ItemBtn.Text = tostring(option)
                         ItemBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
