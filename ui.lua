@@ -1,10 +1,10 @@
 --[[ 
-    SIMPLE UI LIBRARY (ULTIMATE V2)
+    SIMPLE UI LIBRARY (ULTIMATE V3)
     1. Dark Golden Luxury Theme (No Borders)
     2. Safe Close & Minimize System
     3. Input (Text/Number)
-    4. CONFIG SYSTEM FIXED (Auto Refresh List)
-    5. NOTIFICATION SYSTEM ADDED
+    4. CONFIG SYSTEM FIXED (Auto Refresh & Autoload Buttons)
+    5. DYNAMIC LABELS
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -213,6 +213,7 @@ function Library:CreateWindow(Config)
         
         function TabFunctions:Label(Text)
             local Lab = Instance.new("TextLabel") Lab.Size = UDim2.new(1, 0, 0, 30) Lab.BackgroundTransparency = 1 Lab.Text = Text Lab.TextColor3 = Color3.fromRGB(40, 25, 10) Lab.Font = Enum.Font.GothamBold Lab.TextSize = 15 Lab.Parent = Page
+            return Lab -- FIX: Return object agar teks bisa diupdate
         end
 
         function TabFunctions:Input(Text, Flag, Default, Type, Callback)
@@ -282,7 +283,7 @@ function Library:CreateWindow(Config)
             
             Library.Registry[Flag] = {
                 Set = function(val) Selected = val UpdateHeaderText() Library.Options[Flag] = Selected if Callback then Callback(Selected) end end,
-                Refresh = function(NewList) Options = NewList RefreshList("") end -- FIX: Auto Refresh Trigger
+                Refresh = function(NewList) Options = NewList RefreshList("") end
             }
         end
         
@@ -300,18 +301,18 @@ function Library:CreateWindow(Config)
                     end
                 end
                 if Library.Registry["ConfigList"] then 
-                    Library.Registry["ConfigList"].Refresh(ConfigList) -- FIX: Uses Refresh method
+                    Library.Registry["ConfigList"].Refresh(ConfigList) 
                 end 
             end
 
             TabFunctions:Dropdown("Select Config", "ConfigList", {}, false, nil, function(val) ConfigName = val end)
-            RefreshConfigs() -- Init Load
+            RefreshConfigs()
 
             TabFunctions:Button("Create / Overwrite", function()
                 if ConfigName == "" then return Library:Notify({Title="Error", Content="Input config name first!", Duration=2}) end
                 writefile(FolderName.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Options))
                 RefreshConfigs()
-                Library:Notify({Title="Success", Content="Config '"..ConfigName.."' Saved!", Duration=3})
+                Library:Notify({Title="Success", Content="Config Saved!", Duration=3})
             end)
 
             TabFunctions:Button("Load Config", function()
@@ -336,9 +337,32 @@ function Library:CreateWindow(Config)
 
             TabFunctions:Button("Refresh List", function() RefreshConfigs() Library:Notify({Title="Info", Content="List Refreshed", Duration=1}) end)
             
-            TabFunctions:Toggle("Autoload Config", "AutoloadConfig", false, function(val)
-                if val then writefile(FolderName.."/autoload.txt", ConfigName)
-                else if isfile(FolderName.."/autoload.txt") then delfile(FolderName.."/autoload.txt") end end
+            -- [AUTOLOAD SYSTEM - UPDATED]
+            TabFunctions:Label("Autoload Settings")
+            
+            -- Dynamic Status Label
+            local CurrentAuto = "None"
+            if isfile(FolderName.."/autoload.txt") then CurrentAuto = readfile(FolderName.."/autoload.txt") end
+            local AutoLabel = TabFunctions:Label("Current Autoload: " .. CurrentAuto)
+            
+            -- Set to Autoload Button
+            TabFunctions:Button("Set to Autoload", function()
+                if ConfigName ~= "" then
+                    writefile(FolderName.."/autoload.txt", ConfigName)
+                    AutoLabel.Text = "Current Autoload: " .. ConfigName
+                    Library:Notify({Title="Autoload", Content="Set to '"..ConfigName.."'", Duration=3})
+                else
+                    Library:Notify({Title="Error", Content="Select a config first!", Duration=2})
+                end
+            end)
+
+            -- Reset Autoload Button
+            TabFunctions:Button("Reset Autoload", function()
+                if isfile(FolderName.."/autoload.txt") then
+                    delfile(FolderName.."/autoload.txt")
+                    AutoLabel.Text = "Current Autoload: None"
+                    Library:Notify({Title="Autoload", Content="Autoload Cleared!", Duration=3})
+                end
             end)
         end
 
@@ -352,7 +376,7 @@ function Library:CreateWindow(Config)
         local Duration = Config.Duration or 3
         
         local Frame = Instance.new("Frame")
-        Frame.Size = UDim2.new(1, -20, 0, 0) -- Mulai dari tinggi 0 (Animasi)
+        Frame.Size = UDim2.new(1, -20, 0, 0)
         Frame.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
         Frame.BorderSizePixel = 0
         Frame.Parent = NotifyHolder
@@ -363,18 +387,14 @@ function Library:CreateWindow(Config)
         local TitleLab = Instance.new("TextLabel") TitleLab.Size = UDim2.new(1, -10, 0, 20) TitleLab.Position = UDim2.new(0, 10, 0, 5) TitleLab.BackgroundTransparency = 1 TitleLab.Text = Title TitleLab.TextColor3 = Color3.fromRGB(255, 215, 0) TitleLab.Font = Enum.Font.GothamBold TitleLab.TextSize = 14 TitleLab.TextXAlignment = Enum.TextXAlignment.Left TitleLab.Parent = Frame
         local ContentLab = Instance.new("TextLabel") ContentLab.Size = UDim2.new(1, -10, 0, 20) ContentLab.Position = UDim2.new(0, 10, 0, 25) ContentLab.BackgroundTransparency = 1 ContentLab.Text = Content ContentLab.TextColor3 = Color3.fromRGB(255, 255, 255) ContentLab.Font = Enum.Font.Gotham ContentLab.TextSize = 13 ContentLab.TextXAlignment = Enum.TextXAlignment.Left ContentLab.Parent = Frame
         
-        -- Animation In
         TweenService:Create(Frame, TweenInfo.new(0.3), {Size = UDim2.new(1, -20, 0, 50)}):Play()
         task.wait(0.3)
-        
-        -- Wait & Out
         task.delay(Duration, function()
             TweenService:Create(Frame, TweenInfo.new(0.3), {Size = UDim2.new(1, -20, 0, 0), BackgroundTransparency = 1}):Play()
             TweenService:Create(Stroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
             TweenService:Create(TitleLab, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
             TweenService:Create(ContentLab, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
-            task.wait(0.3)
-            Frame:Destroy()
+            task.wait(0.3) Frame:Destroy()
         end)
     end
 
