@@ -1,3 +1,162 @@
+--[[ 
+    SIMPLE UI LIBRARY
+    Lightweight, CoreGui Support, No Images.
+    Author: [Your Name]
+]]
+
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local Players = game:GetService("Players")
+local CoreGui = game:GetService("CoreGui")
+
+-- [1] UTILITIES & SAFE GUI
+local function GetSafeGui()
+    -- Mencoba mengambil container UI yang aman (CoreGui)
+    local success, result = pcall(function()
+        return (gethui and gethui()) or (game:GetService("CoreGui"))
+    end)
+    if not success then return Players.LocalPlayer:WaitForChild("PlayerGui") end
+    return result
+end
+
+local function MakeDraggable(topbarobject, object)
+    local Dragging = nil
+    local DragInput = nil
+    local DragStart = nil
+    local StartPosition = nil
+
+    local function Update(input)
+        local Delta = input.Position - DragStart
+        local pos = UDim2.new(StartPosition.X.Scale, StartPosition.X.Offset + Delta.X, StartPosition.Y.Scale, StartPosition.Y.Offset + Delta.Y)
+        object.Position = pos
+    end
+
+    topbarobject.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            Dragging = true
+            DragStart = input.Position
+            StartPosition = object.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    Dragging = false
+                end
+            end)
+        end
+    end)
+
+    topbarobject.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            DragInput = input
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if input == DragInput and Dragging then
+            Update(input)
+        end
+    end)
+end
+
+-- [2] LIBRARY MAIN
+local Library = {}
+
+function Library:CreateWindow(Config)
+    local Title = Config.Title or "Golden Luxury Hub"
+    
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "GoldLib_" .. math.random(1,1000)
+    ScreenGui.ResetOnSpawn = false
+    ScreenGui.Parent = GetSafeGui()
+
+    -- [1] Main Frame (Solid Deep Gold)
+    local MainFrame = Instance.new("Frame")
+    MainFrame.Name = "MainFrame"
+    MainFrame.Size = UDim2.new(0, 450, 0, 300)
+    MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
+    -- Warna Emas Kaya (Rich Gold) - Tidak terlalu kuning terang
+    MainFrame.BackgroundColor3 = Color3.fromRGB(180, 130, 20) 
+    MainFrame.BorderSizePixel = 0
+    MainFrame.Parent = ScreenGui
+
+    -- Memberikan Border Emas Terang agar terlihat seperti lempengan emas
+    local MainStroke = Instance.new("UIStroke")
+    MainStroke.Color = Color3.fromRGB(220, 180, 50) -- Emas lebih terang
+    MainStroke.Thickness = 2
+    MainStroke.Parent = MainFrame
+
+    -- Rounded Corner
+    local Corner = Instance.new("UICorner")
+    Corner.CornerRadius = UDim.new(0, 8) -- Sedikit lebih bulat untuk kesan premium
+    Corner.Parent = MainFrame
+    
+    -- [2] Topbar (Darker Bronze/Gold contrast)
+    local Topbar = Instance.new("Frame")
+    Topbar.Size = UDim2.new(1, 0, 0, 40) -- Sedikit lebih tinggi
+    -- Warna kontras gelap (Bronze tua) agar judul terbaca jelas
+    Topbar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
+    Topbar.BorderSizePixel = 0
+    Topbar.Parent = MainFrame
+    
+    local TopbarCorner = Instance.new("UICorner")
+    TopbarCorner.CornerRadius = UDim.new(0, 8)
+    TopbarCorner.Parent = Topbar
+    
+    local HideBar = Instance.new("Frame")
+    HideBar.Size = UDim2.new(1, 0, 0, 10)
+    HideBar.Position = UDim2.new(0, 0, 1, -10)
+    HideBar.BorderSizePixel = 0
+    Topbar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
+    HideBar.Parent = Topbar
+
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Size = UDim2.new(1, -20, 1, 0)
+    TitleLabel.Position = UDim2.new(0, 15, 0, 0)
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Text = Title
+    TitleLabel.Font = Enum.Font.GothamBold
+    -- Teks warna Emas Krim Terang
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 245, 220) 
+    TitleLabel.TextSize = 18
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.Parent = Topbar
+    
+    MakeDraggable(Topbar, MainFrame)
+
+    -- [3] Tab Container (Dark Bronze Side)
+    local TabContainer = Instance.new("Frame")
+    TabContainer.Size = UDim2.new(0, 130, 1, -40)
+    TabContainer.Position = UDim2.new(0, 0, 0, 40)
+    -- Menyamakan dengan topbar
+    TabContainer.BackgroundColor3 = Color3.fromRGB(50, 35, 10) 
+    TabContainer.BorderSizePixel = 0
+    TabContainer.Parent = MainFrame
+    
+    local TabCorner = Instance.new("UICorner")
+    TabCorner.CornerRadius = UDim.new(0, 8)
+    TabCorner.Parent = TabContainer
+
+    local TabListLayout = Instance.new("UIListLayout")
+    TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    TabListLayout.Padding = UDim.new(0, 8)
+    TabListLayout.Parent = TabContainer
+    
+    local TabPadding = Instance.new("UIPadding")
+    TabPadding.PaddingTop = UDim.new(0, 15)
+    TabPadding.PaddingLeft = UDim.new(0, 10)
+    TabPadding.Parent = TabContainer
+
+    -- Page Container
+    local PageContainer = Instance.new("Frame")
+    PageContainer.Size = UDim2.new(1, -145, 1, -55)
+    PageContainer.Position = UDim2.new(0, 135, 0, 45)
+    PageContainer.BackgroundTransparency = 1
+    PageContainer.Parent = MainFrame
+
+    local WindowFunctions = {}
+    local FirstTab = true
+
 function Library:CreateWindow(Config)
     local Title = Config.Title or "Golden Luxury Hub"
     
@@ -450,3 +609,5 @@ function Library:CreateWindow(Config)
 
     return WindowFunctions
 end
+
+return Library
