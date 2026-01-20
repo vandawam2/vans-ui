@@ -337,8 +337,6 @@ function Library:CreateWindow(Config)
 
             TabFunctions:Button("Refresh List", function() RefreshConfigs() Library:Notify({Title="Info", Content="List Refreshed", Duration=1}) end)
             
-            -- [AUTOLOAD SYSTEM - UPDATED]
-            TabFunctions:Label("Autoload Settings")
             
             -- Dynamic Status Label
             local CurrentAuto = "None"
