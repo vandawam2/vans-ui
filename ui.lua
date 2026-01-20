@@ -234,15 +234,16 @@ function Library:CreateWindow(Config)
         end
 
         -- [ELEMENT: DROPDOWN]
+        -- [ELEMENT: DROPDOWN (UPDATED)]
         function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
             local DropdownExpanded = false
-            local Selected = Multi and (Default or {}) or (Default or "")
+            local Selected = Multi and (Default or {}) or (Default or nil)
             
             -- Frame Utama Dropdown
             local DropFrame = Instance.new("Frame")
             DropFrame.Size = UDim2.new(1, 0, 0, 40) -- Tinggi awal (tertutup)
             DropFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            DropFrame.ClipsDescendants = true -- Penting biar list ga bocor
+            DropFrame.ClipsDescendants = true
             DropFrame.Parent = Page
             
             local DropCorner = Instance.new("UICorner")
@@ -260,7 +261,15 @@ function Library:CreateWindow(Config)
             TitleLabel.Size = UDim2.new(1, -40, 1, 0)
             TitleLabel.Position = UDim2.new(0, 10, 0, 0)
             TitleLabel.BackgroundTransparency = 1
-            TitleLabel.Text = Text .. ": " .. (Multi and (type(Selected) == "table" and table.concat(Selected, ", ") or "None") or tostring(Selected))
+            -- Set text awal
+            local displayVal = "None"
+            if Multi then
+                displayVal = (type(Selected) == "table" and #Selected > 0) and table.concat(Selected, ", ") or "None"
+            else
+                displayVal = Selected and tostring(Selected) or "None"
+            end
+            TitleLabel.Text = Text .. ": " .. displayVal
+            
             TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
             TitleLabel.Font = Enum.Font.Gotham
             TitleLabel.TextSize = 13
@@ -280,7 +289,7 @@ function Library:CreateWindow(Config)
 
             -- Container List Item
             local ListContainer = Instance.new("ScrollingFrame")
-            ListContainer.Size = UDim2.new(1, -10, 0, 150) -- Tinggi maksimal saat dibuka
+            ListContainer.Size = UDim2.new(1, -10, 0, 150)
             ListContainer.Position = UDim2.new(0, 5, 0, 45)
             ListContainer.BackgroundTransparency = 1
             ListContainer.ScrollBarThickness = 2
@@ -304,7 +313,7 @@ function Library:CreateWindow(Config)
             SearchBox.TextSize = 13
             SearchBox.Visible = false
             SearchBox.Parent = DropFrame
-            SearchBox.Position = UDim2.new(0, 5, 0, 45) -- Posisi di atas list
+            SearchBox.Position = UDim2.new(0, 5, 0, 45)
             
             local SearchCorner = Instance.new("UICorner")
             SearchCorner.CornerRadius = UDim.new(0, 4)
@@ -322,24 +331,22 @@ function Library:CreateWindow(Config)
                         TitleLabel.Text = Text .. ": " .. table.concat(Selected, ", ")
                     end
                 else
-                    TitleLabel.Text = Text .. ": " .. tostring(Selected)
+                    -- Jika Selected nil, tampilkan None
+                    TitleLabel.Text = Text .. ": " .. (Selected and tostring(Selected) or "None")
                 end
             end
 
-            -- Fungsi Load Item (Anti Lag)
+            -- Fungsi Load Item
             local function RefreshList(filterText)
-                -- Bersihkan list lama
                 for _, v in pairs(ListContainer:GetChildren()) do
                     if v:IsA("TextButton") then v:Destroy() end
                 end
                 
-                -- Adjust posisi list karena ada search bar
                 ListContainer.Position = UDim2.new(0, 5, 0, 75) 
                 ListContainer.Size = UDim2.new(1, -10, 0, 120)
 
                 local count = 0
                 for _, option in ipairs(Options) do
-                    -- Filter Search
                     if filterText == "" or string.find(tostring(option):lower(), filterText:lower()) then
                         
                         local ItemBtn = Instance.new("TextButton")
@@ -355,7 +362,7 @@ function Library:CreateWindow(Config)
                         ItemCorner.CornerRadius = UDim.new(0, 4)
                         ItemCorner.Parent = ItemBtn
 
-                        -- Cek Status Seleksi Awal
+                        -- Cek Status Seleksi Awal (Visual)
                         if Multi then
                             if table.find(Selected, option) then
                                 ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
@@ -368,18 +375,16 @@ function Library:CreateWindow(Config)
                             end
                         end
 
-                        -- Logika Klik Item
                         ItemBtn.MouseButton1Click:Connect(function()
                             if Multi then
+                                -- LOGIKA MULTI (Tetap sama)
                                 if table.find(Selected, option) then
-                                    -- Deselect
                                     for i, v in ipairs(Selected) do
                                         if v == option then table.remove(Selected, i) break end
                                     end
                                     ItemBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
                                     ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
                                 else
-                                    -- Select
                                     table.insert(Selected, option)
                                     ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
                                     ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -387,31 +392,48 @@ function Library:CreateWindow(Config)
                                 UpdateHeaderText()
                                 if Callback then Callback(Selected) end
                             else
-                                -- Single Select
-                                Selected = option
-                                UpdateHeaderText()
-                                -- Reset visual lain
-                                for _, btn in pairs(ListContainer:GetChildren()) do
-                                    if btn:IsA("TextButton") then
-                                        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-                                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                                -- LOGIKA SINGLE (Bisa Deselect)
+                                if Selected == option then
+                                    -- [1] Jika diklik lagi -> Deselect (Jadi Nil/None)
+                                    Selected = nil
+                                    UpdateHeaderText()
+                                    
+                                    -- Ubah warna jadi abu-abu
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                                    ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                                    
+                                    -- Kirim nil ke callback
+                                    if Callback then Callback(nil) end
+                                else
+                                    -- [2] Jika pilih item baru -> Select
+                                    Selected = option
+                                    UpdateHeaderText()
+                                    
+                                    -- Reset visual semua tombol lain
+                                    for _, btn in pairs(ListContainer:GetChildren()) do
+                                        if btn:IsA("TextButton") then
+                                            btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                                            btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                                        end
                                     end
+                                    
+                                    -- Highlight item ini
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                                    ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                                    
+                                    -- Tutup Dropdown (Hanya menutup jika MEMILIH, kalau deselect tetap buka atau tutup opsional, disini saya tutup juga biar rapi)
+                                    DropdownExpanded = false
+                                    TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+                                    Arrow.Text = "▼"
+                                    ListContainer.Visible = false
+                                    SearchBox.Visible = false
+                                    
+                                    if Callback then Callback(Selected) end
                                 end
-                                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
-                                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
-                                
-                                -- Tutup Dropdown
-                                DropdownExpanded = false
-                                TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 40)}):Play()
-                                Arrow.Text = "▼"
-                                ListContainer.Visible = false
-                                SearchBox.Visible = false
-                                
-                                if Callback then Callback(Selected) end
                             end
                         end)
                         
-                        -- [OPTIMASI UTAMA] Yield setiap 30 item biar ga freeze
+                        -- Optimasi Load
                         count = count + 1
                         if count % 30 == 0 then
                             ListContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
@@ -419,16 +441,13 @@ function Library:CreateWindow(Config)
                         end
                     end
                 end
-                -- Update Canvas Size terakhir
                 ListContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
             end
 
-            -- Search Listener
             SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
                 RefreshList(SearchBox.Text)
             end)
 
-            -- Toggle Dropdown
             HeaderBtn.MouseButton1Click:Connect(function()
                 DropdownExpanded = not DropdownExpanded
                 if DropdownExpanded then
@@ -437,7 +456,6 @@ function Library:CreateWindow(Config)
                     ListContainer.Visible = true
                     SearchBox.Visible = true
                     
-                    -- Load Item saat pertama kali dibuka saja (biar enteng)
                     if #ListContainer:GetChildren() <= 1 then
                         task.spawn(function() RefreshList("") end)
                     end
@@ -449,7 +467,6 @@ function Library:CreateWindow(Config)
                 end
             end)
             
-            -- Set Text Awal
             UpdateHeaderText()
         end
 
