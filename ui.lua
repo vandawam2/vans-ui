@@ -1,7 +1,8 @@
 --[[ 
-    SIMPLE UI LIBRARY (FINAL DARK GOLD)
-    Lightweight, CoreGui Support, No Images.
-    Style: Flat Dark Gold (No Borders)
+    SIMPLE UI LIBRARY (FINAL REVISION)
+    1. Auto-Deletes Old instances (Anti-Stack)
+    2. Buttons are now VERY DARK (Coffee/Dark Choco)
+    3. Absolutely NO Borders on Buttons
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -17,6 +18,13 @@ local function GetSafeGui()
     end)
     if not success then return Players.LocalPlayer:WaitForChild("PlayerGui") end
     return result
+end
+
+-- [🔥 PENTING] HAPUS GUI LAMA OTOMATIS BIAR GAK NUMPUK
+for _, v in pairs(GetSafeGui():GetChildren()) do
+    if v.Name:sub(1, 8) == "GoldLib_" then
+        v:Destroy()
+    end
 end
 
 local function MakeDraggable(topbarobject, object)
@@ -69,7 +77,7 @@ function Library:CreateWindow(Config)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = GetSafeGui()
 
-    -- [1] Main Frame (Solid Deep Gold)
+    -- [1] Main Frame (Background Emas Mewah)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 450, 0, 300)
@@ -78,9 +86,9 @@ function Library:CreateWindow(Config)
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
 
-    -- Main Frame tetap pakai stroke tipis agar terlihat bingkainya
+    -- Border hanya di Frame Utama (Opsional, hapus jika mau polos total)
     local MainStroke = Instance.new("UIStroke")
-    MainStroke.Color = Color3.fromRGB(220, 180, 50)
+    MainStroke.Color = Color3.fromRGB(255, 215, 0)
     MainStroke.Thickness = 2
     MainStroke.Parent = MainFrame
 
@@ -91,7 +99,7 @@ function Library:CreateWindow(Config)
     -- [2] Topbar
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, 40)
-    Topbar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
+    Topbar.BackgroundColor3 = Color3.fromRGB(50, 35, 10) -- Sangat Gelap
     Topbar.BorderSizePixel = 0
     Topbar.Parent = MainFrame
     
@@ -103,7 +111,7 @@ function Library:CreateWindow(Config)
     HideBar.Size = UDim2.new(1, 0, 0, 10)
     HideBar.Position = UDim2.new(0, 0, 1, -10)
     HideBar.BorderSizePixel = 0
-    HideBar.BackgroundColor3 = Color3.fromRGB(60, 45, 15) 
+    HideBar.BackgroundColor3 = Color3.fromRGB(50, 35, 10) 
     HideBar.Parent = Topbar
 
     local TitleLabel = Instance.new("TextLabel")
@@ -123,7 +131,7 @@ function Library:CreateWindow(Config)
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(0, 130, 1, -40)
     TabContainer.Position = UDim2.new(0, 0, 0, 40)
-    TabContainer.BackgroundColor3 = Color3.fromRGB(50, 35, 10) 
+    TabContainer.BackgroundColor3 = Color3.fromRGB(40, 25, 5) -- Hampir Hitam
     TabContainer.BorderSizePixel = 0
     TabContainer.Parent = MainFrame
     
@@ -154,10 +162,11 @@ function Library:CreateWindow(Config)
     function WindowFunctions:Tab(Name)
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -15, 0, 32)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+        -- Tab Non-Aktif: Gelap Pudar
+        TabBtn.BackgroundColor3 = Color3.fromRGB(60, 45, 15)
         TabBtn.BackgroundTransparency = 0.5
         TabBtn.Text = Name
-        TabBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
+        TabBtn.TextColor3 = Color3.fromRGB(150, 130, 100)
         TabBtn.Font = Enum.Font.GothamSemibold
         TabBtn.TextSize = 14
         TabBtn.Parent = TabContainer
@@ -187,7 +196,7 @@ function Library:CreateWindow(Config)
 
         if FirstTab then
             Page.Visible = true
-            TabBtn.BackgroundColor3 = Color3.fromRGB(220, 180, 50)
+            TabBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0)
             TabBtn.TextColor3 = Color3.fromRGB(40, 30, 15)
             TabBtn.BackgroundTransparency = 0
             FirstTab = false
@@ -200,16 +209,16 @@ function Library:CreateWindow(Config)
             for _, child in pairs(TabContainer:GetChildren()) do
                 if child:IsA("TextButton") then 
                     TweenService:Create(child, TweenInfo.new(0.2), {
-                        BackgroundColor3 = Color3.fromRGB(70, 50, 20), 
+                        BackgroundColor3 = Color3.fromRGB(60, 45, 15), 
                         BackgroundTransparency = 0.5,
-                        TextColor3 = Color3.fromRGB(180, 160, 120)
+                        TextColor3 = Color3.fromRGB(150, 130, 100)
                     }):Play()
                 end
             end
             
             Page.Visible = true
             TweenService:Create(TabBtn, TweenInfo.new(0.2), {
-                BackgroundColor3 = Color3.fromRGB(220, 180, 50),
+                BackgroundColor3 = Color3.fromRGB(255, 215, 0),
                 BackgroundTransparency = 0,
                 TextColor3 = Color3.fromRGB(40, 30, 15)
             }):Play()
@@ -217,42 +226,43 @@ function Library:CreateWindow(Config)
 
         local TabFunctions = {}
 
-        -- [ELEMENT: BUTTON - Simple Dark Gold (No Border)]
+        -- [ELEMENT: BUTTON - WARNA SAMA DENGAN TOGGLE (SANGAT GELAP)]
         function TabFunctions:Button(Text, Callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 38)
-            -- Warna disamakan dengan toggle (Gelap Simple)
-            Btn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+            -- Warna Cokelat Sangat Gelap (Hampir Hitam)
+            Btn.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             Btn.Text = Text
             Btn.TextColor3 = Color3.fromRGB(255, 230, 150)
             Btn.Font = Enum.Font.GothamBold
             Btn.TextSize = 14
+            Btn.BorderSizePixel = 0 -- Pastikan border 0
             Btn.Parent = Page
             
             local BtnCorner = Instance.new("UICorner")
             BtnCorner.CornerRadius = UDim.new(0, 6)
             BtnCorner.Parent = Btn
             
-            -- UIStroke DIHAPUS agar clean
+            -- HAPUS UIStroke TOTAL
             
             Btn.MouseButton1Click:Connect(function()
-                -- Efek klik simpel (sedikit lebih terang)
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(90, 70, 30)}):Play()
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(65, 50, 30)}):Play()
                 task.wait(0.1)
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(70, 50, 20)}):Play()
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(45, 30, 10)}):Play()
                 if Callback then task.spawn(Callback) end
             end)
         end
 
-        -- [ELEMENT: TOGGLE - Simple Dark Gold]
+        -- [ELEMENT: TOGGLE]
         function TabFunctions:Toggle(Text, Default, Callback)
             local Enabled = Default or false
             
             local ToggleFrame = Instance.new("TextButton")
             ToggleFrame.Size = UDim2.new(1, 0, 0, 38)
-            -- Warna Gelap Simple
-            ToggleFrame.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+            -- Warna Cokelat Sangat Gelap (SAMA PERSIS DENGAN BUTTON)
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             ToggleFrame.Text = ""
+            ToggleFrame.BorderSizePixel = 0
             ToggleFrame.Parent = Page
             
             local ToggleCorner = Instance.new("UICorner")
@@ -273,14 +283,14 @@ function Library:CreateWindow(Config)
             local StatusBox = Instance.new("Frame")
             StatusBox.Size = UDim2.new(0, 24, 0, 24)
             StatusBox.Position = UDim2.new(1, -34, 0.5, -12)
-            StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(40, 35, 20)
+            -- Warna Status: Kuning Terang (On) atau Gelap (Off)
+            StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5)
             StatusBox.Parent = ToggleFrame
             
             local StatusCorner = Instance.new("UICorner")
             StatusCorner.CornerRadius = UDim.new(0, 4)
             StatusCorner.Parent = StatusBox
             
-            -- Stroke hanya di kotak kecil status, frame utama polos
             local StatusStroke = Instance.new("UIStroke")
             StatusStroke.Color = Color3.fromRGB(255, 230, 150)
             StatusStroke.Thickness = 1
@@ -288,41 +298,43 @@ function Library:CreateWindow(Config)
             
             ToggleFrame.MouseButton1Click:Connect(function()
                 Enabled = not Enabled
-                local GoalColor = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(40, 35, 20)
+                local GoalColor = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5)
                 TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = GoalColor}):Play()
                 if Callback then task.spawn(Callback, Enabled) end
             end)
         end
         
-        -- [ELEMENT: LABEL - Dark Text]
+        -- [ELEMENT: LABEL - DARK TEXT]
         function TabFunctions:Label(Text)
             local Lab = Instance.new("TextLabel")
             Lab.Size = UDim2.new(1, 0, 0, 30)
             Lab.BackgroundTransparency = 1
             Lab.Text = Text
-            Lab.TextColor3 = Color3.fromRGB(50, 40, 20) 
+            -- Warna Teks Gelap (Kopi/Cokelat) Kontras dengan background Emas
+            Lab.TextColor3 = Color3.fromRGB(40, 25, 10) 
             Lab.Font = Enum.Font.GothamBold
             Lab.TextSize = 15
             Lab.Parent = Page
         end
 
-        -- [ELEMENT: DROPDOWN - Simple Dark Gold (No Border)]
+        -- [ELEMENT: DROPDOWN]
         function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
             local DropdownExpanded = false
             local Selected = Multi and (Default or {}) or (Default or nil)
             
             local DropFrame = Instance.new("Frame")
             DropFrame.Size = UDim2.new(1, 0, 0, 40)
-            -- Warna disamakan dengan Button/Toggle
-            DropFrame.BackgroundColor3 = Color3.fromRGB(70, 50, 20) 
+            -- Warna Cokelat Sangat Gelap (SAMA PERSIS DENGAN BUTTON)
+            DropFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
             DropFrame.ClipsDescendants = true
+            DropFrame.BorderSizePixel = 0
             DropFrame.Parent = Page
             
             local DropCorner = Instance.new("UICorner")
             DropCorner.CornerRadius = UDim.new(0, 6)
             DropCorner.Parent = DropFrame
             
-            -- UIStroke DIHAPUS agar clean
+            -- HAPUS UIStroke TOTAL
             
             local HeaderBtn = Instance.new("TextButton")
             HeaderBtn.Size = UDim2.new(1, 0, 0, 40)
@@ -368,15 +380,15 @@ function Library:CreateWindow(Config)
 
             local SearchBox = Instance.new("TextBox")
             SearchBox.Size = UDim2.new(1, 0, 0, 25)
-            -- Background SearchBox sedikit lebih gelap dari frame
-            SearchBox.BackgroundColor3 = Color3.fromRGB(50, 35, 10)
+            SearchBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) -- Lebih gelap dari frame
             SearchBox.PlaceholderText = "Search..."
             SearchBox.Text = ""
             SearchBox.TextColor3 = Color3.fromRGB(255, 230, 150)
-            SearchBox.PlaceholderColor3 = Color3.fromRGB(180, 160, 120)
+            SearchBox.PlaceholderColor3 = Color3.fromRGB(150, 130, 100)
             SearchBox.Font = Enum.Font.Gotham
             SearchBox.TextSize = 13
             SearchBox.Visible = false
+            SearchBox.BorderSizePixel = 0
             SearchBox.Parent = DropFrame
             SearchBox.Position = UDim2.new(0, 5, 0, 45)
             
@@ -406,12 +418,13 @@ function Library:CreateWindow(Config)
                     if filterText == "" or string.find(tostring(option):lower(), filterText:lower()) then
                         local ItemBtn = Instance.new("TextButton")
                         ItemBtn.Size = UDim2.new(1, 0, 0, 25)
-                        -- Item list warna dasar
-                        ItemBtn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+                        -- Item Default: Gelap sama seperti Frame
+                        ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
                         ItemBtn.Text = tostring(option)
                         ItemBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
                         ItemBtn.Font = Enum.Font.Gotham
                         ItemBtn.TextSize = 13
+                        ItemBtn.BorderSizePixel = 0
                         ItemBtn.Parent = ListContainer
                         local ItemCorner = Instance.new("UICorner")
                         ItemCorner.CornerRadius = UDim.new(0, 4)
@@ -433,7 +446,7 @@ function Library:CreateWindow(Config)
                             if Multi then
                                 if table.find(Selected, option) then
                                     for i, v in ipairs(Selected) do if v == option then table.remove(Selected, i) break end end
-                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
                                     ItemBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
                                 else
                                     table.insert(Selected, option)
@@ -446,7 +459,7 @@ function Library:CreateWindow(Config)
                                 if Selected == option then
                                     Selected = nil
                                     UpdateHeaderText()
-                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
                                     ItemBtn.TextColor3 = Color3.fromRGB(180, 160, 120)
                                     if Callback then Callback(nil) end
                                 else
@@ -454,7 +467,7 @@ function Library:CreateWindow(Config)
                                     UpdateHeaderText()
                                     for _, btn in pairs(ListContainer:GetChildren()) do
                                         if btn:IsA("TextButton") then
-                                            btn.BackgroundColor3 = Color3.fromRGB(70, 50, 20)
+                                            btn.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
                                             btn.TextColor3 = Color3.fromRGB(180, 160, 120)
                                         end
                                     end
