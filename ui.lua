@@ -1,9 +1,10 @@
 --[[ 
-    SIMPLE UI LIBRARY (ULTIMATE EDITION)
+    SIMPLE UI LIBRARY (ULTIMATE V2)
     1. Dark Golden Luxury Theme (No Borders)
-    2. Safe Close System
-    3. Input (Text/Number) Added
-    4. FULL CONFIG SYSTEM (Save/Load/AutoLoad)
+    2. Safe Close & Minimize System
+    3. Input (Text/Number)
+    4. CONFIG SYSTEM FIXED (Auto Refresh List)
+    5. NOTIFICATION SYSTEM ADDED
 ]]
 
 local UserInputService = game:GetService("UserInputService")
@@ -13,7 +14,7 @@ local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local CoreGui = game:GetService("CoreGui")
 
--- [1] UTILITIES & FILE SYSTEM
+-- [1] UTILITIES & SAFE GUI
 local function GetSafeGui()
     local success, result = pcall(function()
         return (gethui and gethui()) or (game:GetService("CoreGui"))
@@ -49,22 +50,38 @@ end
 
 -- [2] LIBRARY MAIN
 local Library = {}
-Library.Options = {} -- Tempat simpan value untuk config
-Library.Registry = {} -- Tempat simpan fungsi update UI
+Library.Options = {} 
+Library.Registry = {} 
 
 function Library:CreateWindow(Config)
     local Title = Config.Title or "Golden Luxury Hub"
     local LogoText = Config.Logo or "G"
     local FolderName = Config.FolderName or "GoldenConfig"
-    local AutoLoadConfig = Config.AutoLoad or false
     
-    -- Setup Folder
     if not isfolder(FolderName) then makefolder(FolderName) end
     
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "GoldLib_" .. math.random(1,1000)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = GetSafeGui()
+
+    -- [NOTIFICATION HOLDER]
+    local NotifyHolder = Instance.new("Frame")
+    NotifyHolder.Name = "NotifyHolder"
+    NotifyHolder.Size = UDim2.new(0, 300, 1, 0)
+    NotifyHolder.Position = UDim2.new(1, -320, 0, 0)
+    NotifyHolder.BackgroundTransparency = 1
+    NotifyHolder.Parent = ScreenGui
+    
+    local NotifyLayout = Instance.new("UIListLayout")
+    NotifyLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    NotifyLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
+    NotifyLayout.Padding = UDim.new(0, 5)
+    NotifyLayout.Parent = NotifyHolder
+    
+    local NotifyPadding = Instance.new("UIPadding")
+    NotifyPadding.PaddingBottom = UDim.new(0, 20)
+    NotifyPadding.Parent = NotifyHolder
 
     -- [A] MINIMIZER
     local MiniFrame = Instance.new("TextButton")
@@ -121,7 +138,7 @@ function Library:CreateWindow(Config)
     TitleLabel.Parent = Topbar
     MakeDraggable(Topbar, MainFrame)
 
-    -- [D] CONFIRMATION POPUP
+    -- [D] POPUP & CONTROLS
     local ConfirmCanvas = Instance.new("Frame") ConfirmCanvas.Size = UDim2.new(1,0,1,0) ConfirmCanvas.BackgroundColor3 = Color3.new(0,0,0) ConfirmCanvas.BackgroundTransparency = 0.4 ConfirmCanvas.ZIndex = 20 ConfirmCanvas.Visible = false ConfirmCanvas.Parent = MainFrame
     local ConfirmCanvasCorner = Instance.new("UICorner") ConfirmCanvasCorner.CornerRadius = UDim.new(0,8) ConfirmCanvasCorner.Parent = ConfirmCanvas
     local ConfirmBox = Instance.new("Frame") ConfirmBox.Size = UDim2.new(0,220,0,110) ConfirmBox.Position = UDim2.new(0.5,-110,0.5,-55) ConfirmBox.BackgroundColor3 = Color3.fromRGB(45,30,10) ConfirmBox.ZIndex = 21 ConfirmBox.Parent = ConfirmCanvas
@@ -137,7 +154,6 @@ function Library:CreateWindow(Config)
     local NoCorner = Instance.new("UICorner") NoCorner.CornerRadius = UDim.new(0,6) NoCorner.Parent = NoBtn
     NoBtn.MouseButton1Click:Connect(function() ConfirmCanvas.Visible = false end)
 
-    -- [E] CONTROLS
     local ButtonContainer = Instance.new("Frame") ButtonContainer.Size = UDim2.new(0, 80, 1, 0) ButtonContainer.Position = UDim2.new(1, -85, 0, 0) ButtonContainer.BackgroundTransparency = 1 ButtonContainer.Parent = Topbar
     local Layout = Instance.new("UIListLayout") Layout.FillDirection = Enum.FillDirection.Horizontal Layout.SortOrder = Enum.SortOrder.LayoutOrder Layout.Padding = UDim.new(0, 5) Layout.HorizontalAlignment = Enum.HorizontalAlignment.Right Layout.VerticalAlignment = Enum.VerticalAlignment.Center Layout.Parent = ButtonContainer
     local CloseBtn = Instance.new("TextButton") CloseBtn.Name = "Close" CloseBtn.Size = UDim2.new(0, 30, 0, 30) CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50) CloseBtn.Text = "X" CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255) CloseBtn.Font = Enum.Font.GothamBold CloseBtn.TextSize = 14 CloseBtn.LayoutOrder = 2 CloseBtn.Parent = ButtonContainer
@@ -147,7 +163,7 @@ function Library:CreateWindow(Config)
     local MinCorner = Instance.new("UICorner") MinCorner.CornerRadius = UDim.new(0, 6) MinCorner.Parent = MinBtn
     MinBtn.MouseButton1Click:Connect(function() TweenService:Create(MainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 0, 0, 0)}):Play() task.wait(0.3) MainFrame.Visible = false MiniFrame.Visible = true end)
 
-    -- [F] TABS
+    -- [E] TABS
     local TabContainer = Instance.new("Frame") TabContainer.Size = UDim2.new(0, 130, 1, -40) TabContainer.Position = UDim2.new(0, 0, 0, 40) TabContainer.BackgroundColor3 = Color3.fromRGB(40, 25, 5) TabContainer.BorderSizePixel = 0 TabContainer.Parent = MainFrame
     local TabCorner = Instance.new("UICorner") TabCorner.CornerRadius = UDim.new(0, 8) TabCorner.Parent = TabContainer
     local TabListLayout = Instance.new("UIListLayout") TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder TabListLayout.Padding = UDim.new(0, 8) TabListLayout.Parent = TabContainer
@@ -158,132 +174,62 @@ function Library:CreateWindow(Config)
     local FirstTab = true
 
     function WindowFunctions:Tab(Name)
-        local TabBtn = Instance.new("TextButton")
-        TabBtn.Size = UDim2.new(1, -15, 0, 32)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(60, 45, 15)
-        TabBtn.BackgroundTransparency = 0.5
-        TabBtn.Text = Name
-        TabBtn.TextColor3 = Color3.fromRGB(150, 130, 100)
-        TabBtn.Font = Enum.Font.GothamSemibold
-        TabBtn.TextSize = 14
-        TabBtn.Parent = TabContainer
+        local TabBtn = Instance.new("TextButton") TabBtn.Size = UDim2.new(1, -15, 0, 32) TabBtn.BackgroundColor3 = Color3.fromRGB(60, 45, 15) TabBtn.BackgroundTransparency = 0.5 TabBtn.Text = Name TabBtn.TextColor3 = Color3.fromRGB(150, 130, 100) TabBtn.Font = Enum.Font.GothamSemibold TabBtn.TextSize = 14 TabBtn.Parent = TabContainer
         local TabBtnCorner = Instance.new("UICorner") TabBtnCorner.CornerRadius = UDim.new(0, 6) TabBtnCorner.Parent = TabBtn
         local Page = Instance.new("ScrollingFrame") Page.Size = UDim2.new(1, 0, 1, 0) Page.BackgroundTransparency = 1 Page.ScrollBarThickness = 4 Page.ScrollBarImageColor3 = Color3.fromRGB(255, 215, 0) Page.Visible = false Page.Parent = PageContainer
         local PageLayout = Instance.new("UIListLayout") PageLayout.SortOrder = Enum.SortOrder.LayoutOrder PageLayout.Padding = UDim.new(0, 8) PageLayout.Parent = Page
         local PagePadding = Instance.new("UIPadding") PagePadding.PaddingTop = UDim.new(0, 5) PagePadding.PaddingLeft = UDim.new(0, 5) PagePadding.PaddingRight = UDim.new(0, 5) PagePadding.Parent = Page
 
-        if FirstTab then
-            Page.Visible = true TabBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0) TabBtn.TextColor3 = Color3.fromRGB(40, 30, 15) TabBtn.BackgroundTransparency = 0 FirstTab = false
-        end
+        if FirstTab then Page.Visible = true TabBtn.BackgroundColor3 = Color3.fromRGB(255, 215, 0) TabBtn.TextColor3 = Color3.fromRGB(40, 30, 15) TabBtn.BackgroundTransparency = 0 FirstTab = false end
 
         TabBtn.MouseButton1Click:Connect(function()
             for _, c in pairs(PageContainer:GetChildren()) do if c:IsA("ScrollingFrame") then c.Visible = false end end
             for _, c in pairs(TabContainer:GetChildren()) do if c:IsA("TextButton") then TweenService:Create(c, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 45, 15), BackgroundTransparency = 0.5, TextColor3 = Color3.fromRGB(150, 130, 100)}):Play() end end
-            Page.Visible = true
-            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 215, 0), BackgroundTransparency = 0, TextColor3 = Color3.fromRGB(40, 30, 15)}):Play()
+            Page.Visible = true TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(255, 215, 0), BackgroundTransparency = 0, TextColor3 = Color3.fromRGB(40, 30, 15)}):Play()
         end)
 
         local TabFunctions = {}
 
-        -- [ELEMENT: BUTTON]
+        -- [ELEMENTS]
         function TabFunctions:Button(Text, Callback)
             local Btn = Instance.new("TextButton") Btn.Size = UDim2.new(1, 0, 0, 38) Btn.BackgroundColor3 = Color3.fromRGB(45, 30, 10) Btn.Text = Text Btn.TextColor3 = Color3.fromRGB(255, 230, 150) Btn.Font = Enum.Font.GothamBold Btn.TextSize = 14 Btn.BorderSizePixel = 0 Btn.Parent = Page
             local BtnCorner = Instance.new("UICorner") BtnCorner.CornerRadius = UDim.new(0, 6) BtnCorner.Parent = Btn
-            Btn.MouseButton1Click:Connect(function()
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(65, 50, 30)}):Play() task.wait(0.1)
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(45, 30, 10)}):Play()
-                if Callback then task.spawn(Callback) end
-            end)
+            Btn.MouseButton1Click:Connect(function() TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(65, 50, 30)}):Play() task.wait(0.1) TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(45, 30, 10)}):Play() if Callback then task.spawn(Callback) end end)
         end
 
-        -- [ELEMENT: TOGGLE] (Supports Flags)
         function TabFunctions:Toggle(Text, Flag, Default, Callback)
             local Enabled = Default or false
             Library.Options[Flag] = Enabled
-            
             local ToggleFrame = Instance.new("TextButton") ToggleFrame.Size = UDim2.new(1, 0, 0, 38) ToggleFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) ToggleFrame.Text = "" ToggleFrame.BorderSizePixel = 0 ToggleFrame.Parent = Page
             local ToggleCorner = Instance.new("UICorner") ToggleCorner.CornerRadius = UDim.new(0, 6) ToggleCorner.Parent = ToggleFrame
             local Label = Instance.new("TextLabel") Label.Size = UDim2.new(1, -50, 1, 0) Label.Position = UDim2.new(0, 10, 0, 0) Label.BackgroundTransparency = 1 Label.Text = Text Label.TextColor3 = Color3.fromRGB(255, 230, 150) Label.Font = Enum.Font.GothamSemibold Label.TextSize = 14 Label.TextXAlignment = Enum.TextXAlignment.Left Label.Parent = ToggleFrame
             local StatusBox = Instance.new("Frame") StatusBox.Size = UDim2.new(0, 24, 0, 24) StatusBox.Position = UDim2.new(1, -34, 0.5, -12) StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5) StatusBox.Parent = ToggleFrame
             local StatusCorner = Instance.new("UICorner") StatusCorner.CornerRadius = UDim.new(0, 4) StatusCorner.Parent = StatusBox
             local StatusStroke = Instance.new("UIStroke") StatusStroke.Color = Color3.fromRGB(255, 230, 150) StatusStroke.Thickness = 1 StatusStroke.Parent = StatusBox
-            
-            local function UpdateState(val)
-                Enabled = val
-                Library.Options[Flag] = Enabled
-                local GoalColor = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5)
-                TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = GoalColor}):Play()
-                if Callback then task.spawn(Callback, Enabled) end
-            end
-
+            local function UpdateState(val) Enabled = val Library.Options[Flag] = Enabled local GoalColor = Enabled and Color3.fromRGB(255, 215, 0) or Color3.fromRGB(30, 20, 5) TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = GoalColor}):Play() if Callback then task.spawn(Callback, Enabled) end end
             ToggleFrame.MouseButton1Click:Connect(function() UpdateState(not Enabled) end)
-            
-            -- Registry for Config Load
-            Library.Registry[Flag] = {
-                Set = function(val) UpdateState(val) end
-            }
+            Library.Registry[Flag] = {Set = function(val) UpdateState(val) end}
         end
         
-        -- [ELEMENT: LABEL]
         function TabFunctions:Label(Text)
             local Lab = Instance.new("TextLabel") Lab.Size = UDim2.new(1, 0, 0, 30) Lab.BackgroundTransparency = 1 Lab.Text = Text Lab.TextColor3 = Color3.fromRGB(40, 25, 10) Lab.Font = Enum.Font.GothamBold Lab.TextSize = 15 Lab.Parent = Page
         end
 
-        -- [ELEMENT: INPUT (NEW)]
         function TabFunctions:Input(Text, Flag, Default, Type, Callback)
-            -- Type: "Text" or "Number"
-            Default = Default or ""
-            Library.Options[Flag] = Default
-
+            Default = Default or "" Library.Options[Flag] = Default
             local InputFrame = Instance.new("Frame") InputFrame.Size = UDim2.new(1, 0, 0, 38) InputFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) InputFrame.BorderSizePixel = 0 InputFrame.Parent = Page
             local InputCorner = Instance.new("UICorner") InputCorner.CornerRadius = UDim.new(0, 6) InputCorner.Parent = InputFrame
-            
             local Label = Instance.new("TextLabel") Label.Size = UDim2.new(1, -110, 1, 0) Label.Position = UDim2.new(0, 10, 0, 0) Label.BackgroundTransparency = 1 Label.Text = Text Label.TextColor3 = Color3.fromRGB(255, 230, 150) Label.Font = Enum.Font.GothamSemibold Label.TextSize = 14 Label.TextXAlignment = Enum.TextXAlignment.Left Label.Parent = InputFrame
-            
-            local TextBox = Instance.new("TextBox")
-            TextBox.Size = UDim2.new(0, 100, 0, 24)
-            TextBox.Position = UDim2.new(1, -110, 0.5, -12)
-            TextBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5)
-            TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TextBox.PlaceholderColor3 = Color3.fromRGB(150, 130, 100)
-            TextBox.PlaceholderText = "..."
-            TextBox.Text = Default
-            TextBox.Font = Enum.Font.Gotham
-            TextBox.TextSize = 13
-            TextBox.BorderSizePixel = 0
-            TextBox.Parent = InputFrame
+            local TextBox = Instance.new("TextBox") TextBox.Size = UDim2.new(0, 100, 0, 24) TextBox.Position = UDim2.new(1, -110, 0.5, -12) TextBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) TextBox.TextColor3 = Color3.fromRGB(255, 255, 255) TextBox.PlaceholderColor3 = Color3.fromRGB(150, 130, 100) TextBox.PlaceholderText = "..." TextBox.Text = Default TextBox.Font = Enum.Font.Gotham TextBox.TextSize = 13 TextBox.BorderSizePixel = 0 TextBox.Parent = InputFrame
             local BoxCorner = Instance.new("UICorner") BoxCorner.CornerRadius = UDim.new(0, 4) BoxCorner.Parent = TextBox
-
-            TextBox.FocusLost:Connect(function()
-                if Type == "Number" then
-                    local num = tonumber(TextBox.Text)
-                    if not num then
-                        TextBox.Text = tostring(Default)
-                    else
-                        Library.Options[Flag] = num
-                        if Callback then Callback(num) end
-                    end
-                else
-                    Library.Options[Flag] = TextBox.Text
-                    if Callback then Callback(TextBox.Text) end
-                end
-            end)
-            
-            Library.Registry[Flag] = {
-                Set = function(val) 
-                    TextBox.Text = tostring(val)
-                    Library.Options[Flag] = val
-                    if Callback then Callback(val) end
-                end
-            }
+            TextBox.FocusLost:Connect(function() if Type == "Number" then local num = tonumber(TextBox.Text) if not num then TextBox.Text = tostring(Default) else Library.Options[Flag] = num if Callback then Callback(num) end end else Library.Options[Flag] = TextBox.Text if Callback then Callback(TextBox.Text) end end end)
+            Library.Registry[Flag] = {Set = function(val) TextBox.Text = tostring(val) Library.Options[Flag] = val if Callback then Callback(val) end end}
         end
 
-        -- [ELEMENT: DROPDOWN] (Supports Flags)
         function TabFunctions:Dropdown(Text, Flag, Options, Multi, Default, Callback)
             local DropdownExpanded = false
             local Selected = Multi and (Default or {}) or (Default or nil)
             Library.Options[Flag] = Selected
-
             local DropFrame = Instance.new("Frame") DropFrame.Size = UDim2.new(1, 0, 0, 40) DropFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) DropFrame.ClipsDescendants = true DropFrame.BorderSizePixel = 0 DropFrame.Parent = Page
             local DropCorner = Instance.new("UICorner") DropCorner.CornerRadius = UDim.new(0, 6) DropCorner.Parent = DropFrame
             local HeaderBtn = Instance.new("TextButton") HeaderBtn.Size = UDim2.new(1, 0, 0, 40) HeaderBtn.BackgroundTransparency = 1 HeaderBtn.Text = "" HeaderBtn.Parent = DropFrame
@@ -295,8 +241,7 @@ function Library:CreateWindow(Config)
             local SearchCorner = Instance.new("UICorner") SearchCorner.CornerRadius = UDim.new(0, 4) SearchCorner.Parent = SearchBox
 
             local function UpdateHeaderText()
-                if Multi then
-                    local count = #Selected if count == 0 then TitleLabel.Text = Text .. ": None" elseif count > 3 then TitleLabel.Text = Text .. ": " .. count .. " Selected" else TitleLabel.Text = Text .. ": " .. table.concat(Selected, ", ") end
+                if Multi then local count = #Selected if count == 0 then TitleLabel.Text = Text .. ": None" elseif count > 3 then TitleLabel.Text = Text .. ": " .. count .. " Selected" else TitleLabel.Text = Text .. ": " .. table.concat(Selected, ", ") end
                 else TitleLabel.Text = Text .. ": " .. (Selected and tostring(Selected) or "None") end
             end
 
@@ -336,7 +281,8 @@ function Library:CreateWindow(Config)
             UpdateHeaderText()
             
             Library.Registry[Flag] = {
-                Set = function(val) Selected = val UpdateHeaderText() Library.Options[Flag] = Selected if Callback then Callback(Selected) end end
+                Set = function(val) Selected = val UpdateHeaderText() Library.Options[Flag] = Selected if Callback then Callback(Selected) end end,
+                Refresh = function(NewList) Options = NewList RefreshList("") end -- FIX: Auto Refresh Trigger
             }
         end
         
@@ -344,39 +290,39 @@ function Library:CreateWindow(Config)
         function TabFunctions:AddConfigSystem(FolderName)
             local ConfigName = ""
             TabFunctions:Label("Config Manager")
-            
             TabFunctions:Input("Config Name", "ConfigInput", "", "Text", function(val) ConfigName = val end)
             
-            local ConfigList = {}
             local function RefreshConfigs()
-                ConfigList = {}
+                local ConfigList = {}
                 if isfolder(FolderName) then
                     for _, file in ipairs(listfiles(FolderName)) do
-                        if file:sub(-5) == ".json" then
-                            table.insert(ConfigList, file:sub(#FolderName + 2, -6))
-                        end
+                        if file:sub(-5) == ".json" then table.insert(ConfigList, file:sub(#FolderName + 2, -6)) end
                     end
                 end
-                if Library.Registry["ConfigList"] then Library.Registry["ConfigList"].Set(nil) end -- Reset Dropdown
+                if Library.Registry["ConfigList"] then 
+                    Library.Registry["ConfigList"].Refresh(ConfigList) -- FIX: Uses Refresh method
+                end 
             end
-            RefreshConfigs()
 
-            TabFunctions:Dropdown("Select Config", "ConfigList", ConfigList, false, nil, function(val) ConfigName = val end)
+            TabFunctions:Dropdown("Select Config", "ConfigList", {}, false, nil, function(val) ConfigName = val end)
+            RefreshConfigs() -- Init Load
 
             TabFunctions:Button("Create / Overwrite", function()
-                if ConfigName == "" then return end
+                if ConfigName == "" then return Library:Notify({Title="Error", Content="Input config name first!", Duration=2}) end
                 writefile(FolderName.."/"..ConfigName..".json", HttpService:JSONEncode(Library.Options))
                 RefreshConfigs()
+                Library:Notify({Title="Success", Content="Config '"..ConfigName.."' Saved!", Duration=3})
             end)
 
             TabFunctions:Button("Load Config", function()
                 if isfile(FolderName.."/"..ConfigName..".json") then
                     local data = HttpService:JSONDecode(readfile(FolderName.."/"..ConfigName..".json"))
                     for flag, value in pairs(data) do
-                        if Library.Registry[flag] then
-                            Library.Registry[flag].Set(value)
-                        end
+                        if Library.Registry[flag] then Library.Registry[flag].Set(value) end
                     end
+                    Library:Notify({Title="Success", Content="Config Loaded!", Duration=3})
+                else
+                    Library:Notify({Title="Error", Content="Config not found!", Duration=2})
                 end
             end)
             
@@ -384,12 +330,12 @@ function Library:CreateWindow(Config)
                 if isfile(FolderName.."/"..ConfigName..".json") then
                     delfile(FolderName.."/"..ConfigName..".json")
                     RefreshConfigs()
+                    Library:Notify({Title="Success", Content="Config Deleted!", Duration=3})
                 end
             end)
 
-            TabFunctions:Button("Refresh List", function() RefreshConfigs() end)
+            TabFunctions:Button("Refresh List", function() RefreshConfigs() Library:Notify({Title="Info", Content="List Refreshed", Duration=1}) end)
             
-            -- Autoload Logic
             TabFunctions:Toggle("Autoload Config", "AutoloadConfig", false, function(val)
                 if val then writefile(FolderName.."/autoload.txt", ConfigName)
                 else if isfile(FolderName.."/autoload.txt") then delfile(FolderName.."/autoload.txt") end end
@@ -399,16 +345,50 @@ function Library:CreateWindow(Config)
         return TabFunctions
     end
     
-    -- AutoLoad Check at Start
+    -- [NOTIFY FUNCTION]
+    function Library:Notify(Config)
+        local Title = Config.Title or "Notification"
+        local Content = Config.Content or "Message"
+        local Duration = Config.Duration or 3
+        
+        local Frame = Instance.new("Frame")
+        Frame.Size = UDim2.new(1, -20, 0, 0) -- Mulai dari tinggi 0 (Animasi)
+        Frame.BackgroundColor3 = Color3.fromRGB(45, 30, 10)
+        Frame.BorderSizePixel = 0
+        Frame.Parent = NotifyHolder
+        
+        local Corner = Instance.new("UICorner") Corner.CornerRadius = UDim.new(0, 6) Corner.Parent = Frame
+        local Stroke = Instance.new("UIStroke") Stroke.Color = Color3.fromRGB(255, 215, 0) Stroke.Thickness = 1.5 Stroke.Parent = Frame
+        
+        local TitleLab = Instance.new("TextLabel") TitleLab.Size = UDim2.new(1, -10, 0, 20) TitleLab.Position = UDim2.new(0, 10, 0, 5) TitleLab.BackgroundTransparency = 1 TitleLab.Text = Title TitleLab.TextColor3 = Color3.fromRGB(255, 215, 0) TitleLab.Font = Enum.Font.GothamBold TitleLab.TextSize = 14 TitleLab.TextXAlignment = Enum.TextXAlignment.Left TitleLab.Parent = Frame
+        local ContentLab = Instance.new("TextLabel") ContentLab.Size = UDim2.new(1, -10, 0, 20) ContentLab.Position = UDim2.new(0, 10, 0, 25) ContentLab.BackgroundTransparency = 1 ContentLab.Text = Content ContentLab.TextColor3 = Color3.fromRGB(255, 255, 255) ContentLab.Font = Enum.Font.Gotham ContentLab.TextSize = 13 ContentLab.TextXAlignment = Enum.TextXAlignment.Left ContentLab.Parent = Frame
+        
+        -- Animation In
+        TweenService:Create(Frame, TweenInfo.new(0.3), {Size = UDim2.new(1, -20, 0, 50)}):Play()
+        task.wait(0.3)
+        
+        -- Wait & Out
+        task.delay(Duration, function()
+            TweenService:Create(Frame, TweenInfo.new(0.3), {Size = UDim2.new(1, -20, 0, 0), BackgroundTransparency = 1}):Play()
+            TweenService:Create(Stroke, TweenInfo.new(0.3), {Transparency = 1}):Play()
+            TweenService:Create(TitleLab, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            TweenService:Create(ContentLab, TweenInfo.new(0.3), {TextTransparency = 1}):Play()
+            task.wait(0.3)
+            Frame:Destroy()
+        end)
+    end
+
+    -- AutoLoad Check
     task.spawn(function()
         if isfile(FolderName.."/autoload.txt") then
             local autoConf = readfile(FolderName.."/autoload.txt")
             if isfile(FolderName.."/"..autoConf..".json") then
                 local data = HttpService:JSONDecode(readfile(FolderName.."/"..autoConf..".json"))
-                task.wait(1) -- Wait for UI to load
+                task.wait(1) 
                 for flag, value in pairs(data) do
                     if Library.Registry[flag] then Library.Registry[flag].Set(value) end
                 end
+                Library:Notify({Title="AutoLoad", Content="Config '"..autoConf.."' loaded!", Duration=3})
             end
         end
     end)
