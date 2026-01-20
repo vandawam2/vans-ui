@@ -233,6 +233,226 @@ function Library:CreateWindow(Config)
             end)
         end
 
+        -- [ELEMENT: DROPDOWN]
+        function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
+            local DropdownExpanded = false
+            local Selected = Multi and (Default or {}) or (Default or "")
+            
+            -- Frame Utama Dropdown
+            local DropFrame = Instance.new("Frame")
+            DropFrame.Size = UDim2.new(1, 0, 0, 40) -- Tinggi awal (tertutup)
+            DropFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            DropFrame.ClipsDescendants = true -- Penting biar list ga bocor
+            DropFrame.Parent = Page
+            
+            local DropCorner = Instance.new("UICorner")
+            DropCorner.CornerRadius = UDim.new(0, 4)
+            DropCorner.Parent = DropFrame
+            
+            -- Header (Tombol Klik)
+            local HeaderBtn = Instance.new("TextButton")
+            HeaderBtn.Size = UDim2.new(1, 0, 0, 40)
+            HeaderBtn.BackgroundTransparency = 1
+            HeaderBtn.Text = ""
+            HeaderBtn.Parent = DropFrame
+            
+            local TitleLabel = Instance.new("TextLabel")
+            TitleLabel.Size = UDim2.new(1, -40, 1, 0)
+            TitleLabel.Position = UDim2.new(0, 10, 0, 0)
+            TitleLabel.BackgroundTransparency = 1
+            TitleLabel.Text = Text .. ": " .. (Multi and (type(Selected) == "table" and table.concat(Selected, ", ") or "None") or tostring(Selected))
+            TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            TitleLabel.Font = Enum.Font.Gotham
+            TitleLabel.TextSize = 13
+            TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            TitleLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            TitleLabel.Parent = HeaderBtn
+            
+            local Arrow = Instance.new("TextLabel")
+            Arrow.Size = UDim2.new(0, 30, 1, 0)
+            Arrow.Position = UDim2.new(1, -30, 0, 0)
+            Arrow.BackgroundTransparency = 1
+            Arrow.Text = "▼"
+            Arrow.TextColor3 = Color3.fromRGB(150, 150, 150)
+            Arrow.Font = Enum.Font.GothamBold
+            Arrow.TextSize = 14
+            Arrow.Parent = HeaderBtn
+
+            -- Container List Item
+            local ListContainer = Instance.new("ScrollingFrame")
+            ListContainer.Size = UDim2.new(1, -10, 0, 150) -- Tinggi maksimal saat dibuka
+            ListContainer.Position = UDim2.new(0, 5, 0, 45)
+            ListContainer.BackgroundTransparency = 1
+            ListContainer.ScrollBarThickness = 2
+            ListContainer.CanvasSize = UDim2.new(0, 0, 0, 0)
+            ListContainer.Visible = false
+            ListContainer.Parent = DropFrame
+            
+            local ListLayout = Instance.new("UIListLayout")
+            ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            ListLayout.Padding = UDim.new(0, 2)
+            ListLayout.Parent = ListContainer
+
+            -- Search Bar
+            local SearchBox = Instance.new("TextBox")
+            SearchBox.Size = UDim2.new(1, 0, 0, 25)
+            SearchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            SearchBox.PlaceholderText = "Search..."
+            SearchBox.Text = ""
+            SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SearchBox.Font = Enum.Font.Gotham
+            SearchBox.TextSize = 13
+            SearchBox.Visible = false
+            SearchBox.Parent = DropFrame
+            SearchBox.Position = UDim2.new(0, 5, 0, 45) -- Posisi di atas list
+            
+            local SearchCorner = Instance.new("UICorner")
+            SearchCorner.CornerRadius = UDim.new(0, 4)
+            SearchCorner.Parent = SearchBox
+
+            -- Fungsi Update Teks Header
+            local function UpdateHeaderText()
+                if Multi then
+                    local count = #Selected
+                    if count == 0 then
+                        TitleLabel.Text = Text .. ": None"
+                    elseif count > 3 then
+                        TitleLabel.Text = Text .. ": " .. count .. " Selected"
+                    else
+                        TitleLabel.Text = Text .. ": " .. table.concat(Selected, ", ")
+                    end
+                else
+                    TitleLabel.Text = Text .. ": " .. tostring(Selected)
+                end
+            end
+
+            -- Fungsi Load Item (Anti Lag)
+            local function RefreshList(filterText)
+                -- Bersihkan list lama
+                for _, v in pairs(ListContainer:GetChildren()) do
+                    if v:IsA("TextButton") then v:Destroy() end
+                end
+                
+                -- Adjust posisi list karena ada search bar
+                ListContainer.Position = UDim2.new(0, 5, 0, 75) 
+                ListContainer.Size = UDim2.new(1, -10, 0, 120)
+
+                local count = 0
+                for _, option in ipairs(Options) do
+                    -- Filter Search
+                    if filterText == "" or string.find(tostring(option):lower(), filterText:lower()) then
+                        
+                        local ItemBtn = Instance.new("TextButton")
+                        ItemBtn.Size = UDim2.new(1, 0, 0, 25)
+                        ItemBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                        ItemBtn.Text = tostring(option)
+                        ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                        ItemBtn.Font = Enum.Font.Gotham
+                        ItemBtn.TextSize = 13
+                        ItemBtn.Parent = ListContainer
+                        
+                        local ItemCorner = Instance.new("UICorner")
+                        ItemCorner.CornerRadius = UDim.new(0, 4)
+                        ItemCorner.Parent = ItemBtn
+
+                        -- Cek Status Seleksi Awal
+                        if Multi then
+                            if table.find(Selected, option) then
+                                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                            end
+                        else
+                            if Selected == option then
+                                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                            end
+                        end
+
+                        -- Logika Klik Item
+                        ItemBtn.MouseButton1Click:Connect(function()
+                            if Multi then
+                                if table.find(Selected, option) then
+                                    -- Deselect
+                                    for i, v in ipairs(Selected) do
+                                        if v == option then table.remove(Selected, i) break end
+                                    end
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                                    ItemBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                                else
+                                    -- Select
+                                    table.insert(Selected, option)
+                                    ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                                    ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                                end
+                                UpdateHeaderText()
+                                if Callback then Callback(Selected) end
+                            else
+                                -- Single Select
+                                Selected = option
+                                UpdateHeaderText()
+                                -- Reset visual lain
+                                for _, btn in pairs(ListContainer:GetChildren()) do
+                                    if btn:IsA("TextButton") then
+                                        btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+                                        btn.TextColor3 = Color3.fromRGB(200, 200, 200)
+                                    end
+                                end
+                                ItemBtn.BackgroundColor3 = Color3.fromRGB(0, 255, 100)
+                                ItemBtn.TextColor3 = Color3.fromRGB(0, 0, 0)
+                                
+                                -- Tutup Dropdown
+                                DropdownExpanded = false
+                                TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+                                Arrow.Text = "▼"
+                                ListContainer.Visible = false
+                                SearchBox.Visible = false
+                                
+                                if Callback then Callback(Selected) end
+                            end
+                        end)
+                        
+                        -- [OPTIMASI UTAMA] Yield setiap 30 item biar ga freeze
+                        count = count + 1
+                        if count % 30 == 0 then
+                            ListContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+                            task.wait() 
+                        end
+                    end
+                end
+                -- Update Canvas Size terakhir
+                ListContainer.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y)
+            end
+
+            -- Search Listener
+            SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                RefreshList(SearchBox.Text)
+            end)
+
+            -- Toggle Dropdown
+            HeaderBtn.MouseButton1Click:Connect(function()
+                DropdownExpanded = not DropdownExpanded
+                if DropdownExpanded then
+                    Arrow.Text = "▲"
+                    TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 200)}):Play()
+                    ListContainer.Visible = true
+                    SearchBox.Visible = true
+                    
+                    -- Load Item saat pertama kali dibuka saja (biar enteng)
+                    if #ListContainer:GetChildren() <= 1 then
+                        task.spawn(function() RefreshList("") end)
+                    end
+                else
+                    Arrow.Text = "▼"
+                    TweenService:Create(DropFrame, TweenInfo.new(0.2), {Size = UDim2.new(1, 0, 0, 40)}):Play()
+                    ListContainer.Visible = false
+                    SearchBox.Visible = false
+                end
+            end)
+            
+            -- Set Text Awal
+            UpdateHeaderText()
+        end
+
         -- [ELEMENT: TOGGLE]
         function TabFunctions:Toggle(Text, Default, Callback)
             local Enabled = Default or false
