@@ -66,28 +66,38 @@ function Library:CreateWindow(Config)
     local Title = Config.Title or "Simple Hub"
     
     local ScreenGui = Instance.new("ScreenGui")
-    ScreenGui.Name = "SimpleLib_" .. math.random(1,1000)
+    ScreenGui.Name = "RedGreenLib_" .. math.random(1,1000)
     ScreenGui.ResetOnSpawn = false
     ScreenGui.Parent = GetSafeGui()
 
-    -- Main Frame
+    -- [1] Main Frame (Gradient Base)
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
     MainFrame.Size = UDim2.new(0, 450, 0, 300)
     MainFrame.Position = UDim2.new(0.5, -225, 0.5, -150)
-    MainFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    MainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Putih dasar agar gradient keluar warnanya
     MainFrame.BorderSizePixel = 0
     MainFrame.Parent = ScreenGui
 
-    -- Rounded Corner (Simple)
+    -- Nuansa Merah ke Hijau (Gradient)
+    local Gradient = Instance.new("UIGradient")
+    Gradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(80, 20, 20)),   -- Merah Gelap (Kiri)
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 60, 40))    -- Hijau Gelap (Kanan)
+    }
+    Gradient.Rotation = 45 -- Miring 45 derajat
+    Gradient.Parent = MainFrame
+
+    -- Rounded Corner
     local Corner = Instance.new("UICorner")
     Corner.CornerRadius = UDim.new(0, 6)
     Corner.Parent = MainFrame
     
-    -- Topbar
+    -- [2] Topbar (Semi-Transparent Dark)
     local Topbar = Instance.new("Frame")
     Topbar.Size = UDim2.new(1, 0, 0, 35)
-    Topbar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    Topbar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Topbar.BackgroundTransparency = 0.3 -- Agar gradient background terlihat dikit
     Topbar.BorderSizePixel = 0
     Topbar.Parent = MainFrame
     
@@ -95,12 +105,12 @@ function Library:CreateWindow(Config)
     TopbarCorner.CornerRadius = UDim.new(0, 6)
     TopbarCorner.Parent = Topbar
     
-    -- Hiding bottom corners of topbar
-    local HideBar = Instance.new("Frame")
+    local HideBar = Instance.new("Frame") -- Penutup sudut bawah topbar
     HideBar.Size = UDim2.new(1, 0, 0, 5)
     HideBar.Position = UDim2.new(0, 0, 1, -5)
     HideBar.BorderSizePixel = 0
-    HideBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    HideBar.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    HideBar.BackgroundTransparency = 0.3
     HideBar.Parent = Topbar
 
     local TitleLabel = Instance.new("TextLabel")
@@ -109,18 +119,19 @@ function Library:CreateWindow(Config)
     TitleLabel.BackgroundTransparency = 1
     TitleLabel.Text = Title
     TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    TitleLabel.TextColor3 = Color3.fromRGB(255, 230, 230) -- Putih kemerahan dikit
     TitleLabel.TextSize = 16
     TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
     TitleLabel.Parent = Topbar
     
     MakeDraggable(Topbar, MainFrame)
 
-    -- Container Tabs
+    -- [3] Tab Container (Darker Side)
     local TabContainer = Instance.new("Frame")
     TabContainer.Size = UDim2.new(0, 120, 1, -35)
     TabContainer.Position = UDim2.new(0, 0, 0, 35)
-    TabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    TabContainer.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    TabContainer.BackgroundTransparency = 0.6 -- Transparan biar nyatu sama background
     TabContainer.BorderSizePixel = 0
     TabContainer.Parent = MainFrame
     
@@ -149,12 +160,13 @@ function Library:CreateWindow(Config)
     local FirstTab = true
 
     function WindowFunctions:Tab(Name)
-        -- Tab Button
+        -- Tab Button Style
         local TabBtn = Instance.new("TextButton")
         TabBtn.Size = UDim2.new(1, -10, 0, 30)
-        TabBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        TabBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        TabBtn.BackgroundTransparency = 0.9 -- Sangat transparan
         TabBtn.Text = Name
-        TabBtn.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TabBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
         TabBtn.Font = Enum.Font.GothamSemibold
         TabBtn.TextSize = 14
         TabBtn.Parent = TabContainer
@@ -168,6 +180,7 @@ function Library:CreateWindow(Config)
         Page.Size = UDim2.new(1, 0, 1, 0)
         Page.BackgroundTransparency = 1
         Page.ScrollBarThickness = 2
+        Page.ScrollBarImageColor3 = Color3.fromRGB(100, 255, 100) -- Scrollbar hijau
         Page.Visible = false
         Page.Parent = PageContainer
         
@@ -186,33 +199,31 @@ function Library:CreateWindow(Config)
         if FirstTab then
             Page.Visible = true
             TabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-            TabBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            TabBtn.BackgroundTransparency = 0.7
             FirstTab = false
         end
 
         TabBtn.MouseButton1Click:Connect(function()
-            -- Reset all Tabs
             for _, child in pairs(PageContainer:GetChildren()) do
                 if child:IsA("ScrollingFrame") then child.Visible = false end
             end
             for _, child in pairs(TabContainer:GetChildren()) do
                 if child:IsA("TextButton") then 
-                    TweenService:Create(child, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(40,40,40), TextColor3 = Color3.fromRGB(150,150,150)}):Play()
+                    TweenService:Create(child, TweenInfo.new(0.2), {BackgroundTransparency = 0.9, TextColor3 = Color3.fromRGB(200,200,200)}):Play()
                 end
             end
             
-            -- Active This Tab
             Page.Visible = true
-            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60,60,60), TextColor3 = Color3.fromRGB(255,255,255)}):Play()
+            TweenService:Create(TabBtn, TweenInfo.new(0.2), {BackgroundTransparency = 0.7, TextColor3 = Color3.fromRGB(255,255,255)}):Play()
         end)
 
         local TabFunctions = {}
 
-        -- [ELEMENT: BUTTON]
+        -- [ELEMENT: BUTTON - Dengan aksen merah gelap]
         function TabFunctions:Button(Text, Callback)
             local Btn = Instance.new("TextButton")
             Btn.Size = UDim2.new(1, 0, 0, 35)
-            Btn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+            Btn.BackgroundColor3 = Color3.fromRGB(40, 20, 20) -- Merah Gelap
             Btn.Text = Text
             Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
             Btn.Font = Enum.Font.Gotham
@@ -223,17 +234,77 @@ function Library:CreateWindow(Config)
             BtnCorner.CornerRadius = UDim.new(0, 4)
             BtnCorner.Parent = Btn
             
+            -- Stroke Tipis Hijau biar ada aksen
+            local Stroke = Instance.new("UIStroke")
+            Stroke.Color = Color3.fromRGB(50, 80, 50)
+            Stroke.Thickness = 1
+            Stroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+            Stroke.Parent = Btn
+            
             Btn.MouseButton1Click:Connect(function()
-                -- Efek Klik Simple
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 40, 40)}):Play()
                 task.wait(0.1)
-                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(50, 50, 50)}):Play()
-                
+                TweenService:Create(Btn, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(40, 20, 20)}):Play()
                 if Callback then task.spawn(Callback) end
             end)
         end
 
-        -- [ELEMENT: DROPDOWN]
+        -- [ELEMENT: TOGGLE - Hijau saat aktif]
+        function TabFunctions:Toggle(Text, Default, Callback)
+            local Enabled = Default or false
+            
+            local ToggleFrame = Instance.new("TextButton")
+            ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
+            ToggleFrame.BackgroundColor3 = Color3.fromRGB(40, 20, 20)
+            ToggleFrame.Text = ""
+            ToggleFrame.Parent = Page
+            
+            local ToggleCorner = Instance.new("UICorner")
+            ToggleCorner.CornerRadius = UDim.new(0, 4)
+            ToggleCorner.Parent = ToggleFrame
+            
+            local Label = Instance.new("TextLabel")
+            Label.Size = UDim2.new(1, -40, 1, 0)
+            Label.Position = UDim2.new(0, 10, 0, 0)
+            Label.BackgroundTransparency = 1
+            Label.Text = Text
+            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Label.Font = Enum.Font.Gotham
+            Label.TextSize = 14
+            Label.TextXAlignment = Enum.TextXAlignment.Left
+            Label.Parent = ToggleFrame
+            
+            local StatusBox = Instance.new("Frame")
+            StatusBox.Size = UDim2.new(0, 20, 0, 20)
+            StatusBox.Position = UDim2.new(1, -30, 0.5, -10)
+            -- Warna Status: Hijau (Aktif) atau Merah Gelap (Mati)
+            StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(40, 150, 80) or Color3.fromRGB(20, 10, 10)
+            StatusBox.Parent = ToggleFrame
+            
+            local StatusCorner = Instance.new("UICorner")
+            StatusCorner.CornerRadius = UDim.new(0, 4)
+            StatusCorner.Parent = StatusBox
+            
+            ToggleFrame.MouseButton1Click:Connect(function()
+                Enabled = not Enabled
+                local GoalColor = Enabled and Color3.fromRGB(40, 150, 80) or Color3.fromRGB(20, 10, 10)
+                TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = GoalColor}):Play()
+                if Callback then task.spawn(Callback, Enabled) end
+            end)
+        end
+        
+        -- [ELEMENT: LABEL]
+        function TabFunctions:Label(Text)
+            local Lab = Instance.new("TextLabel")
+            Lab.Size = UDim2.new(1, 0, 0, 25)
+            Lab.BackgroundTransparency = 1
+            Lab.Text = Text
+            Lab.TextColor3 = Color3.fromRGB(200, 230, 200) -- Kehijauan dikit
+            Lab.Font = Enum.Font.Gotham
+            Lab.TextSize = 13
+            Lab.Parent = Page
+        end
+
         -- [ELEMENT: DROPDOWN (UPDATED)]
         function TabFunctions:Dropdown(Text, Options, Multi, Default, Callback)
             local DropdownExpanded = false
@@ -469,64 +540,7 @@ function Library:CreateWindow(Config)
             
             UpdateHeaderText()
         end
-
-        -- [ELEMENT: TOGGLE]
-        function TabFunctions:Toggle(Text, Default, Callback)
-            local Enabled = Default or false
-            
-            local ToggleFrame = Instance.new("TextButton")
-            ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
-            ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-            ToggleFrame.Text = ""
-            ToggleFrame.Parent = Page
-            
-            local ToggleCorner = Instance.new("UICorner")
-            ToggleCorner.CornerRadius = UDim.new(0, 4)
-            ToggleCorner.Parent = ToggleFrame
-            
-            local Label = Instance.new("TextLabel")
-            Label.Size = UDim2.new(1, -40, 1, 0)
-            Label.Position = UDim2.new(0, 10, 0, 0)
-            Label.BackgroundTransparency = 1
-            Label.Text = Text
-            Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-            Label.Font = Enum.Font.Gotham
-            Label.TextSize = 14
-            Label.TextXAlignment = Enum.TextXAlignment.Left
-            Label.Parent = ToggleFrame
-            
-            local StatusBox = Instance.new("Frame")
-            StatusBox.Size = UDim2.new(0, 20, 0, 20)
-            StatusBox.Position = UDim2.new(1, -30, 0.5, -10)
-            StatusBox.BackgroundColor3 = Enabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(30, 30, 30)
-            StatusBox.Parent = ToggleFrame
-            
-            local StatusCorner = Instance.new("UICorner")
-            StatusCorner.CornerRadius = UDim.new(0, 4)
-            StatusCorner.Parent = StatusBox
-            
-            ToggleFrame.MouseButton1Click:Connect(function()
-                Enabled = not Enabled
-                -- Animasi Warna
-                local GoalColor = Enabled and Color3.fromRGB(0, 255, 100) or Color3.fromRGB(30, 30, 30)
-                TweenService:Create(StatusBox, TweenInfo.new(0.2), {BackgroundColor3 = GoalColor}):Play()
-                
-                if Callback then task.spawn(Callback, Enabled) end
-            end)
-        end
         
-        -- [ELEMENT: LABEL]
-        function TabFunctions:Label(Text)
-            local Lab = Instance.new("TextLabel")
-            Lab.Size = UDim2.new(1, 0, 0, 25)
-            Lab.BackgroundTransparency = 1
-            Lab.Text = Text
-            Lab.TextColor3 = Color3.fromRGB(200, 200, 200)
-            Lab.Font = Enum.Font.Gotham
-            Lab.TextSize = 13
-            Lab.Parent = Page
-        end
-
         return TabFunctions
     end
 
