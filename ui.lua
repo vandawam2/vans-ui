@@ -173,6 +173,55 @@ function Library:CreateWindow(Config)
     local WindowFunctions = {}
     local FirstTab = true
 
+    function WindowFunctions:Dialog(Config)
+        local Title = Config.Title or "Alert"
+        local Content = Config.Content or "Message"
+        local Buttons = Config.Buttons or {{Title = "Okay", Callback = function() end}}
+
+        -- Overlay
+        local Overlay = Instance.new("Frame") Overlay.Size = UDim2.new(1, 0, 1, 0) Overlay.BackgroundColor3 = Color3.new(0,0,0) Overlay.BackgroundTransparency = 1 Overlay.ZIndex = 50 Overlay.Parent = MainFrame
+        TweenService:Create(Overlay, TweenInfo.new(0.2), {BackgroundTransparency = 0.4}):Play()
+
+        -- Dialog Box
+        local Box = Instance.new("Frame") Box.Size = UDim2.new(0, 260, 0, 0) Box.Position = UDim2.new(0.5, -130, 0.5, -70) Box.BackgroundColor3 = Color3.fromRGB(45, 30, 10) Box.ZIndex = 51 Box.ClipsDescendants = true Box.Parent = Overlay
+        local BoxCorner = Instance.new("UICorner") BoxCorner.CornerRadius = UDim.new(0, 8) BoxCorner.Parent = Box
+        local BoxStroke = Instance.new("UIStroke") BoxStroke.Color = Color3.fromRGB(255, 215, 0) BoxStroke.Thickness = 2 BoxStroke.Parent = Box
+        
+        -- Content
+        local TitleLab = Instance.new("TextLabel") TitleLab.Size = UDim2.new(1, 0, 0, 30) TitleLab.Position = UDim2.new(0, 0, 0, 5) TitleLab.BackgroundTransparency = 1 TitleLab.Text = Title TitleLab.TextColor3 = Color3.fromRGB(255, 230, 150) TitleLab.Font = Enum.Font.GothamBold TitleLab.TextSize = 16 TitleLab.ZIndex = 52 TitleLab.Parent = Box
+        local ContentLab = Instance.new("TextLabel") ContentLab.Size = UDim2.new(1, -20, 0, 60) ContentLab.Position = UDim2.new(0, 10, 0, 35) ContentLab.BackgroundTransparency = 1 ContentLab.Text = Content ContentLab.TextColor3 = Color3.fromRGB(255, 255, 255) ContentLab.Font = Enum.Font.Gotham ContentLab.TextSize = 14 ContentLab.TextWrapped = true ContentLab.ZIndex = 52 ContentLab.Parent = Box
+        
+        -- Buttons Holder
+        local BtnHolder = Instance.new("Frame") BtnHolder.Size = UDim2.new(1, -20, 0, 35) BtnHolder.Position = UDim2.new(0, 10, 1, -45) BtnHolder.BackgroundTransparency = 1 BtnHolder.ZIndex = 52 BtnHolder.Parent = Box
+        local BtnLayout = Instance.new("UIListLayout") BtnLayout.FillDirection = Enum.FillDirection.Horizontal BtnLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center BtnLayout.Padding = UDim.new(0, 10) BtnLayout.Parent = BtnHolder
+
+        -- Create Buttons
+        for _, btnData in ipairs(Buttons) do
+            local Btn = Instance.new("TextButton")
+            Btn.Size = UDim2.new(0, 100, 1, 0)
+            Btn.BackgroundColor3 = Color3.fromRGB(70, 50, 20) -- Dark Gold
+            Btn.Text = btnData.Title
+            Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Btn.Font = Enum.Font.GothamBold
+            Btn.TextSize = 13
+            Btn.ZIndex = 53
+            Btn.Parent = BtnHolder
+            local BtnCorner = Instance.new("UICorner") BtnCorner.CornerRadius = UDim.new(0, 6) BtnCorner.Parent = Btn
+            
+            Btn.MouseButton1Click:Connect(function()
+                if btnData.Callback then btnData.Callback() end
+                -- Close Animation
+                TweenService:Create(Overlay, TweenInfo.new(0.2), {BackgroundTransparency = 1}):Play()
+                TweenService:Create(Box, TweenInfo.new(0.2), {Size = UDim2.new(0, 260, 0, 0)}):Play()
+                task.wait(0.2)
+                Overlay:Destroy()
+            end)
+        end
+
+        -- Open Animation
+        TweenService:Create(Box, TweenInfo.new(0.3, Enum.EasingStyle.Back), {Size = UDim2.new(0, 260, 0, 150)}):Play()
+    end
+
     function WindowFunctions:Tab(Name)
         local TabBtn = Instance.new("TextButton") TabBtn.Size = UDim2.new(1, -15, 0, 32) TabBtn.BackgroundColor3 = Color3.fromRGB(60, 45, 15) TabBtn.BackgroundTransparency = 0.5 TabBtn.Text = Name TabBtn.TextColor3 = Color3.fromRGB(150, 130, 100) TabBtn.Font = Enum.Font.GothamSemibold TabBtn.TextSize = 14 TabBtn.Parent = TabContainer
         local TabBtnCorner = Instance.new("UICorner") TabBtnCorner.CornerRadius = UDim.new(0, 6) TabBtnCorner.Parent = TabBtn
