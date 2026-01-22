@@ -265,17 +265,38 @@ function Library:CreateWindow(Config)
             return Lab -- FIX: Return object agar teks bisa diupdate
         end
 
-        function TabFunctions:Input(Text, Flag, Default, Type, Callback)
+function TabFunctions:Input(Text, Flag, Default, Type, Callback)
             Default = Default or "" Library.Options[Flag] = Default
-            local InputFrame = Instance.new("Frame") InputFrame.Size = UDim2.new(1, 0, 0, 38) InputFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) InputFrame.BorderSizePixel = 0 InputFrame.Parent = Page
+            
+            local InputFrame = Instance.new("Frame") 
+            InputFrame.Size = UDim2.new(1, 0, 0, 38) 
+            InputFrame.BackgroundColor3 = Color3.fromRGB(45, 30, 10) 
+            InputFrame.BorderSizePixel = 0 
+            InputFrame.ClipsDescendants = true -- !!! FIX: AGAR TEKS TIDAK TEMBUS !!!
+            InputFrame.Parent = Page
+            
             local InputCorner = Instance.new("UICorner") InputCorner.CornerRadius = UDim.new(0, 6) InputCorner.Parent = InputFrame
             local Label = Instance.new("TextLabel") Label.Size = UDim2.new(1, -110, 1, 0) Label.Position = UDim2.new(0, 10, 0, 0) Label.BackgroundTransparency = 1 Label.Text = Text Label.TextColor3 = Color3.fromRGB(255, 230, 150) Label.Font = Enum.Font.GothamSemibold Label.TextSize = 14 Label.TextXAlignment = Enum.TextXAlignment.Left Label.Parent = InputFrame
-            local TextBox = Instance.new("TextBox") TextBox.Size = UDim2.new(0, 100, 0, 24) TextBox.Position = UDim2.new(1, -110, 0.5, -12) TextBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) TextBox.TextColor3 = Color3.fromRGB(255, 255, 255) TextBox.PlaceholderColor3 = Color3.fromRGB(150, 130, 100) TextBox.PlaceholderText = "..." TextBox.Text = Default TextBox.Font = Enum.Font.Gotham TextBox.TextSize = 13 TextBox.BorderSizePixel = 0 TextBox.Parent = InputFrame
+            
+            local TextBox = Instance.new("TextBox") 
+            TextBox.Size = UDim2.new(0, 100, 0, 24) 
+            TextBox.Position = UDim2.new(1, -110, 0.5, -12) 
+            TextBox.BackgroundColor3 = Color3.fromRGB(30, 20, 5) 
+            TextBox.TextColor3 = Color3.fromRGB(255, 255, 255) 
+            TextBox.PlaceholderColor3 = Color3.fromRGB(150, 130, 100) 
+            TextBox.PlaceholderText = "..." 
+            TextBox.Text = Default 
+            TextBox.Font = Enum.Font.Gotham 
+            TextBox.TextSize = 13 
+            TextBox.BorderSizePixel = 0 
+            TextBox.ClipsDescendants = true -- !!! EXTRA SAFETY !!!
+            TextBox.TextXAlignment = Enum.TextXAlignment.Center
+            TextBox.Parent = InputFrame
+            
             local BoxCorner = Instance.new("UICorner") BoxCorner.CornerRadius = UDim.new(0, 4) BoxCorner.Parent = TextBox
             TextBox.FocusLost:Connect(function() if Type == "Number" then local num = tonumber(TextBox.Text) if not num then TextBox.Text = tostring(Default) else Library.Options[Flag] = num if Callback then Callback(num) end end else Library.Options[Flag] = TextBox.Text if Callback then Callback(TextBox.Text) end end end)
             Library.Registry[Flag] = {Set = function(val) TextBox.Text = tostring(val) Library.Options[Flag] = val if Callback then Callback(val) end end}
         end
-
         function TabFunctions:Dropdown(Text, Flag, Options, Multi, Default, Callback)
             local DropdownExpanded = false
             local Selected = Multi and (Default or {}) or (Default or nil)
