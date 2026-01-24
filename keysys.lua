@@ -1,50 +1,169 @@
---[[ 
-    ZUPERMING KEY SYSTEM (LIBRARY V2 - EXTERNAL VALIDATION)
-    Features: Minimalist, Custom Validator, Dynamic Error Feedback.
-]]
+local HttpService = game:GetService("HttpService")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 
+-- [1] KOMPATIBILITAS HTTP REQUEST
+local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+
+-- [2] NAMA FILE PENYIMPANAN
+local KeyFileName = "zupermingkey.txt"
+
+-- [3] LIBRARY START
 local KeyLib = {}
 
 function KeyLib:Init(Config)
     local Settings = {
         Title = Config.Title or "Zuperming Key System",
         Url = Config.Url or "https://superminghub.com/getkey",
-        -- Validate Function: Harus return (true/false, "Alasan Error")
-        Validate = Config.Validate or function(key) return false, "No validator set!" end, 
         Callback = Config.Callback or function() end
     }
 
-    local TweenService = game:GetService("TweenService")
-    local UserInputService = game:GetService("UserInputService")
-    local Players = game:GetService("Players")
-    local CoreGui = game:GetService("CoreGui")
-
-    -- [UI SETUP]
+    -- Helper: Safe GUI
     local function GetSafeGui()
         local success, result = pcall(function() return (gethui and gethui()) or (game:GetService("CoreGui")) end)
         if not success then return Players.LocalPlayer:WaitForChild("PlayerGui") end
         return result
     end
 
+    -- Hapus UI lama
     for _, v in pairs(GetSafeGui():GetChildren()) do
-        if v.Name == "ZupermingKeySys" then v:Destroy() end
+        if v.Name == "ZupermingKeySys" or v.Name == "ZupermingLoading" then v:Destroy() end
     end
 
+    -------------------------------------------------------------------------
+    -- [LOGIC 1] FUNGSI CEK KE SERVER
+    -------------------------------------------------------------------------
+    local function CheckToServer(inputKey)
+        if not httpRequest then return false, "Executor not supported (No HTTP)" end
+        
+        local Player = Players.LocalPlayer
+        local bodyData = {
+            key = inputKey,
+            username = Player.Name,
+            userid = Player.UserId
+        }
+
+        local success, response = pcall(function()
+            return httpRequest({
+                Url = "https://superminghub.com/checkkey", -- Ganti Endpoint Server Kamu
+                Method = "POST",
+                Headers = {["Content-Type"] = "application/json"},
+                Body = HttpService:JSONEncode(bodyData)
+            })
+        end)
+
+        if success and response and response.StatusCode == 200 then
+            local data = HttpService:JSONDecode(response.Body)
+            if data.valid == true or data.success == true then
+                return true, "Valid"
+            else
+                return false, data.message or "Invalid Key"
+            end
+        else
+            return false, "Server Error / Timeout"
+        end
+    end
+
+    -------------------------------------------------------------------------
+    -- [LOGIC 2] AUTO-LOAD CHECKER (DENGAN TAMPILAN LOADING)
+    -------------------------------------------------------------------------
+    local SavedKey = nil
+    if _G.KeyMing and type(_G.KeyMing) == "string" and #_G.KeyMing > 0 then
+        SavedKey = _G.KeyMing
+    elseif isfile(KeyFileName) then
+        SavedKey = readfile(KeyFileName)
+    end
+
+    if SavedKey then
+        -- [BUAT UI LOADING]
+        local LoadGui = Instance.new("ScreenGui")
+        LoadGui.Name = "ZupermingLoading"
+        LoadGui.IgnoreGuiInset = true
+        LoadGui.Parent = GetSafeGui()
+
+        local Blur = Instance.new("BlurEffect")
+        Blur.Size = 15
+        Blur.Parent = game:GetService("Lighting")
+
+        local LoadFrame = Instance.new("Frame")
+        LoadFrame.Size = UDim2.new(0, 250, 0, 80)
+        LoadFrame.Position = UDim2.new(0.5, -125, 0.5, -40)
+        LoadFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        LoadFrame.BorderSizePixel = 0
+        LoadFrame.Parent = LoadGui
+
+        local LCorner = Instance.new("UICorner") LCorner.CornerRadius = UDim.new(0, 8) LCorner.Parent = LoadFrame
+        local LStroke = Instance.new("UIStroke") LStroke.Color = Color3.fromRGB(255, 215, 0) LStroke.Thickness = 1.5 LStroke.Parent = LoadFrame -- Emas
+
+        local LoadTitle = Instance.new("TextLabel")
+        LoadTitle.Size = UDim2.new(1, 0, 0, 30)
+        LoadTitle.Position = UDim2.new(0, 0, 0, 10)
+        LoadTitle.BackgroundTransparency = 1
+        LoadTitle.Text = "Auto-Authenticating"
+        LoadTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        LoadTitle.Font = Enum.Font.GothamBold
+        LoadTitle.TextSize = 14
+        LoadTitle.Parent = LoadFrame
+
+        local LoadStatus = Instance.new("TextLabel")
+        LoadStatus.Size = UDim2.new(1, 0, 0, 20)
+        LoadStatus.Position = UDim2.new(0, 0, 0, 40)
+        LoadStatus.BackgroundTransparency = 1
+        LoadStatus.Text = "Checking saved key..."
+        LoadStatus.TextColor3 = Color3.fromRGB(180, 180, 180)
+        LoadStatus.Font = Enum.Font.Gotham
+        LoadStatus.TextSize = 12
+        LoadStatus.Parent = LoadFrame
+
+        -- [PROSES CEK]
+        task.wait(0.5) -- Sedikit delay biar user lihat UI nya
+        local isValid, msg = CheckToServer(SavedKey)
+
+        if isValid then
+            -- [JIKA SUKSES]
+            LoadStatus.Text = "Key Verified! Welcome."
+            LoadStatus.TextColor3 = Color3.fromRGB(100, 255, 100) -- Hijau
+            LStroke.Color = Color3.fromRGB(100, 255, 100)
+            task.wait(1)
+            
+            LoadGui:Destroy()
+            Blur:Destroy()
+            
+            if Settings.Callback then Settings.Callback() end
+            return -- STOP DISINI, TIDAK PERLU LOGIN MANUAL
+        else
+            -- [JIKA GAGAL / KEY EXPIRED]
+            LoadStatus.Text = "Key Expired / Invalid."
+            LoadStatus.TextColor3 = Color3.fromRGB(255, 80, 80) -- Merah
+            LStroke.Color = Color3.fromRGB(255, 80, 80)
+            task.wait(1.5)
+            
+            -- Hapus file lama dan UI Loading
+            if isfile(KeyFileName) then delfile(KeyFileName) end
+            LoadGui:Destroy()
+            Blur:Destroy()
+            -- Lanjut ke pembuatan UI Login Manual di bawah
+        end
+    end
+
+    -------------------------------------------------------------------------
+    -- [LOGIC 3] PEMBUATAN UI LOGIN (MANUAL)
+    -------------------------------------------------------------------------
     local ScreenGui = Instance.new("ScreenGui")
     ScreenGui.Name = "ZupermingKeySys"
     ScreenGui.IgnoreGuiInset = true
     ScreenGui.Parent = GetSafeGui()
 
-    -- Blur
     local Blur = Instance.new("BlurEffect")
     Blur.Size = 0
     Blur.Parent = game:GetService("Lighting")
-    TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 10}):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 15}):Play()
 
-    -- Main Frame
     local MainFrame = Instance.new("Frame")
     MainFrame.Name = "MainFrame"
-    MainFrame.Size = UDim2.new(0, 380, 0, 220) -- Sedikit lebih tinggi untuk status error
+    MainFrame.Size = UDim2.new(0, 380, 0, 220)
     MainFrame.Position = UDim2.new(0.5, -190, 0.5, -110)
     MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     MainFrame.BorderSizePixel = 0
@@ -55,7 +174,7 @@ function KeyLib:Init(Config)
     local MainCorner = Instance.new("UICorner") MainCorner.CornerRadius = UDim.new(0, 8) MainCorner.Parent = MainFrame
     local MainStroke = Instance.new("UIStroke") MainStroke.Color = Color3.fromRGB(45, 45, 45) MainStroke.Thickness = 1 MainStroke.Parent = MainFrame
 
-    -- Draggable Logic
+    -- Draggable
     local Dragging, DragInput, DragStart, StartPosition
     local function Update(input)
         local Delta = input.Position - DragStart
@@ -70,7 +189,7 @@ function KeyLib:Init(Config)
     MainFrame.InputChanged:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then DragInput = input end end)
     UserInputService.InputChanged:Connect(function(input) if input == DragInput and Dragging then Update(input) end end)
 
-    -- Elements
+    -- Close Button
     local CloseBtn = Instance.new("TextButton")
     CloseBtn.Size = UDim2.new(0, 40, 0, 40)
     CloseBtn.Position = UDim2.new(1, -40, 0, 0)
@@ -125,7 +244,6 @@ function KeyLib:Init(Config)
     StatusLabel.TextXAlignment = Enum.TextXAlignment.Left
     StatusLabel.Parent = MainFrame
 
-    -- Reset Error Visual on Typing
     InputBox:GetPropertyChangedSignal("Text"):Connect(function()
         if InputStroke.Color == Color3.fromRGB(255, 80, 80) then
             TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(50, 50, 50)}):Play()
@@ -151,7 +269,6 @@ function KeyLib:Init(Config)
         Btn.TextSize = 13
         Btn.Parent = BtnContainer
         local BtnCorner = Instance.new("UICorner") BtnCorner.CornerRadius = UDim.new(0, 6) BtnCorner.Parent = Btn
-        local BtnStroke = Instance.new("UIStroke") BtnStroke.Color = Color3.fromRGB(60, 60, 60) BtnStroke.Thickness = 1 BtnStroke.Parent = Btn
         
         Btn.MouseEnter:Connect(function() TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = HoverColor, TextColor3 = Color3.new(1,1,1)}):Play() end)
         Btn.MouseLeave:Connect(function() TweenService:Create(Btn, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(35, 35, 35), TextColor3 = Color3.fromRGB(200,200,200)}):Play() end)
@@ -170,13 +287,16 @@ function KeyLib:Init(Config)
         StatusLabel.Text = "Checking..."
         StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 100)
         
-        -- CALL EXTERNAL VALIDATOR
-        local IsValid, Reason = Settings.Validate(InputKey)
+        -- Cek Validasi Manual
+        local IsValid, Reason = CheckToServer(InputKey)
         
         if IsValid then
             StatusLabel.Text = "Success! Loading..."
             StatusLabel.TextColor3 = Color3.fromRGB(100, 255, 100)
             InputBox.TextEditable = false
+            
+            -- Simpan Key Baru
+            writefile(KeyFileName, InputKey)
             
             TweenService:Create(MainFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 380, 0, 0), BackgroundTransparency = 1}):Play()
             TweenService:Create(Blur, TweenInfo.new(0.5), {Size = 0}):Play()
@@ -185,19 +305,11 @@ function KeyLib:Init(Config)
             
             if Settings.Callback then Settings.Callback() end
         else
-            -- INVALID STATE
             StatusLabel.Text = "Error: " .. (Reason or "Invalid Key")
             StatusLabel.TextColor3 = Color3.fromRGB(255, 80, 80)
-            
-            -- Red Effect
             TweenService:Create(InputStroke, TweenInfo.new(0.2), {Color = Color3.fromRGB(255, 80, 80)}):Play()
             TweenService:Create(InputBox, TweenInfo.new(0.2), {TextColor3 = Color3.fromRGB(255, 80, 80)}):Play()
-            
-            -- Shake
-            for i = 1, 5 do
-                MainFrame.Position = UDim2.new(0.5, -190 + (i%2==0 and -5 or 5), 0.5, -110)
-                task.wait(0.05)
-            end
+            for i = 1, 5 do MainFrame.Position = UDim2.new(0.5, -190 + (i%2==0 and -5 or 5), 0.5, -110) task.wait(0.05) end
             MainFrame.Position = UDim2.new(0.5, -190, 0.5, -110)
         end
     end)
