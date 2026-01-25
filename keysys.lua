@@ -130,8 +130,6 @@ function KeyLib:Init(Config)
             
             LoadGui:Destroy()
             Blur:Destroy()
-            print("valid")
-            print(SavedKey)
 
             local HttpService = game:GetService("HttpService")
             local Players = game:GetService("Players")
@@ -145,7 +143,6 @@ function KeyLib:Init(Config)
                 username = Player.Name,
                 userid = Player.UserId -- Opsional: Kirim UserID juga biar lebih aman
             }
-            print("hello")
     
             local success, response = pcall(function()
                 return httpRequest({
@@ -157,9 +154,6 @@ function KeyLib:Init(Config)
                     Body = HttpService:JSONEncode(bodyData)
                 })
             end)
-            print("fk you")
-            print(success)
-            print(response.StatusCode)
             if success and response then
                 if response.StatusCode == 200 then
                     print(response.Body)
