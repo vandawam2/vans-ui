@@ -135,6 +135,7 @@ function KeyLib:Init(Config)
 
             local HttpService = game:GetService("HttpService")
             local Players = game:GetService("Players")
+            local Player = Players.LocalPlayer
             
             -- [1] KOMPATIBILITAS EXECUTOR (Penting!)
             -- Mencari fungsi request yang tersedia di executor kamu
