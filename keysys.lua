@@ -108,8 +108,10 @@ function KeyLib:Init(Config)
             
             task.wait(1)
             LoadGui:Destroy() Blur:Destroy()
+
+            local FinalScript = string.format("_G.KeyMing = \"%s\"\n%s", SavedKey, result)
             
-            local loadFunc, err = loadstring(result)
+            local loadFunc, err = loadstring(FinalScript)
             if loadFunc then loadFunc() if Settings.Callback then Settings.Callback() end end
             return -- STOP DISINI (Auto Load Sukses)
         else
