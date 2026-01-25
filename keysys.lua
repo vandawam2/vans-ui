@@ -131,6 +131,7 @@ function KeyLib:Init(Config)
             LoadGui:Destroy()
             Blur:Destroy()
             print("valid")
+            task.wait(10)
 
             local HttpService = game:GetService("HttpService")
             local Players = game:GetService("Players")
