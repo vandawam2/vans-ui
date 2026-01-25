@@ -154,6 +154,8 @@ function KeyLib:Init(Config)
                     Body = HttpService:JSONEncode(bodyData)
                 })
             end)
+            print(success)
+            print(response)
             if success and response then
                 if response.StatusCode == 200 then
                     print(response.Body)
