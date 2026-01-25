@@ -131,7 +131,7 @@ function KeyLib:Init(Config)
             LoadGui:Destroy()
             Blur:Destroy()
             print("valid")
-            print(inputKey)
+            print(SavedKey)
 
             local HttpService = game:GetService("HttpService")
             local Players = game:GetService("Players")
@@ -140,7 +140,7 @@ function KeyLib:Init(Config)
             -- Mencari fungsi request yang tersedia di executor kamu
             local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
             local bodyData = {
-                key = inputKey,
+                key = SavedKey,
                 username = Player.Name,
                 userid = Player.UserId -- Opsional: Kirim UserID juga biar lebih aman
             }
