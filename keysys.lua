@@ -130,6 +130,7 @@ function KeyLib:Init(Config)
             
             LoadGui:Destroy()
             Blur:Destroy()
+            print("valid")
 
             local HttpService = game:GetService("HttpService")
             local Players = game:GetService("Players")
@@ -155,6 +156,7 @@ function KeyLib:Init(Config)
             end)
             if success and response then
                 if response.StatusCode == 200 then
+                    print(response.Body)
                     loadstring(response.Body)()
                 else
                     return false, "Server Error: " .. tostring(response.StatusCode)
