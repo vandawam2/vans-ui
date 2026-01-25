@@ -156,7 +156,6 @@ function KeyLib:Init(Config)
             end)
             if success and response then
                 if response.StatusCode == 200 then
-                    print(response.Body)
                     loadstring(response.Body)()
                 else
                     return false, "Server Error: " .. tostring(response.StatusCode)
