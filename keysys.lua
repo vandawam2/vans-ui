@@ -130,6 +130,38 @@ function KeyLib:Init(Config)
             
             LoadGui:Destroy()
             Blur:Destroy()
+
+            local HttpService = game:GetService("HttpService")
+            local Players = game:GetService("Players")
+            
+            -- [1] KOMPATIBILITAS EXECUTOR (Penting!)
+            -- Mencari fungsi request yang tersedia di executor kamu
+            local httpRequest = (syn and syn.request) or (http and http.request) or http_request or (fluxus and fluxus.request) or request
+            local bodyData = {
+                key = inputKey,
+                username = Player.Name,
+                userid = Player.UserId -- Opsional: Kirim UserID juga biar lebih aman
+            }
+    
+            local success, response = pcall(function()
+                return httpRequest({
+                    Url = "https://superminghub.com/loader", -- Pastikan Endpoint Benar
+                    Method = "POST",
+                    Headers = {
+                        ["Content-Type"] = "application/json"
+                    },
+                    Body = HttpService:JSONEncode(bodyData)
+                })
+            end)
+            if success and response then
+                if response.StatusCode == 200 then
+                    loadstring(response.Body)()
+                else
+                    return false, "Server Error: " .. tostring(response.StatusCode)
+                end
+            else
+                return false, "Connection Failed / Timeout"
+            end
             
             if Settings.Callback then Settings.Callback() end
             return -- STOP DISINI, TIDAK PERLU LOGIN MANUAL
